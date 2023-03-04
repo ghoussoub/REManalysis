@@ -185,7 +185,7 @@ st.sidebar.markdown("*Settings*")
 #st.sidebar.markdown('###')
 #item1 = st.sidebar.selectbox('Item 1', item_list, index=0)
 #item2 = st.sidebar.selectbox('Item 2', item_list, index=3)
-option = st.sidebar.selectbox("Select Dashboard?", ('Market Historical Trend','Comparative Areas Performance (flats)','Area Specific Flats Prices Analysis', 'Flats Transactions Search','Comparative Areas Performance (villas)','Area Specific Villas Prices Analysis','Comparative Areas Performance (lands)','Area Specific Lands Prices Analysis','Flat Price Estimation'))
+option = st.sidebar.selectbox("Select Dashboard?", ('Market Historical Trend','Comparative Areas Performance (flats)','Area Specific Flats Prices Analysis', 'Flats Transactions Search','Comparative Areas Performance (villas)','Area Specific Villas Prices Analysis','Villas Transactions Search','Comparative Areas Performance (lands)','Area Specific Lands Prices Analysis','Lands Transactions Search','Flat Price Estimation'))
 if option == 'Area Specific Flats Prices Analysis':
     registry = st.sidebar.selectbox('Select registry type?',('Existing Properties','Off-Plan Properties'))
     if registry == "Existing Properties":
@@ -992,285 +992,44 @@ if  option == 'Market Historical Trend':
     kpi1.metric("Last 90 Days Commercial composite median Meter Price",f"{period_Commercial_composite:,}","{0:.0%}".format(period_Commercial_composite_prct_chg))
     kpi2.metric("Last 90 Days Residential composite median Price",f"{period_Residential_composite:,}","{0:.0%}".format(period_Residential_composite_prct_chg))
     
-    
-    #base3 = alt.Chart(all_usage_qtr_median_meter_prices).properties(height=300)
-    #line3 = base3.mark_line(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('composite_land_median_meter_price', title='Composite Median Meter Price'), tooltip = ['fst_qtr','land_usage','composite_land_median_meter_price','qtr_txs'],color=alt.Color('land_usage', title='Land Usage',legend=alt.Legend(orient='right')))
-    #st.altair_chart(line3,use_container_width=True) 
-    
-if option == 'Flat Prices Trend (bis)':
-    registry = st.sidebar.selectbox('Select registry type?',('Existing Properties','Off-Plan Properties'))
-    if registry == "Existing Properties":
-        registry_code = 1
-    else:
-        registry_code = 0
-    flat_area = flat_sales['area_name_en'].unique()
-    select_area = st.sidebar.selectbox('Select area?',flat_area)
-    #st.header("Area Market Analysis of : {}".format(select_area))
-    st.header(option+" in : {}".format(select_area))
-    st.markdown("The metrics below are calculated based on last 90 days period compared to same period last year (YoY)")
-    #select_rooms = st.sidebar.multiselect('Select Flat Rooms', ("1 B/R","2 B/R","3 B/R"),"1 B/R")
-    #slider_year = st.sidebar.slider("Period",2010, int(df['year'].max()))
-    #start = st.sidebar.date_input("Start Date", value = pd.to_datetime('2010-01-01'))
-    #start_day = start.replace(day=1)
-    start_day = pd.to_datetime('2010-01-01')
-    #end = st.sidebar.date_input("End Date",value = pd.to_datetime('today'))
-    #end_day = end.replace(day=1)
-    end_day = flat_sales['txs_date'].max()
-    #flat_sales = df[(df['trans_group_id']==1)&(df['property_type_id']==3)&(df['property_sub_type_id']==60)]
-    #flat_sales_select = flat_sales[(flat_sales['reg_type_id']==registry_code)&(flat_sales['area_name_en'] == select_area)&(flat_sales['fst_day'] >= start_day)&(flat_sales['fst_day'] <= end_day)&(flat_sales['Rooms'] >= 1)&(flat_sales['Rooms']<=4)]
-    end_date = flat_sales['txs_date'].max()
-    start_date = end_date - datetime.timedelta(days=90)
-    #flat_sales_selected_period = flat_sales[(flat_sales['reg_type_id']==registry_code)&(flat_sales['area_name_en']==select_area)&(flat_sales['Room_En'].isin( select_rooms))&(flat_sales['txs_date']<=end_date)&(flat_sales['txs_date']>=start_date)]
-    flat_sales_selected_period = flat_sales[(flat_sales['reg_type_id']==registry_code)&(flat_sales['area_name_en']==select_area)&(flat_sales['txs_date']<=end_date)&(flat_sales['txs_date']>=start_date)&(flat_sales['Rooms']>=2)&(flat_sales['Rooms']<=4)]
-    this_period_count = flat_sales_selected_period['transaction_id'].count()
-    this_period_median_meter_price = int(flat_sales_selected_period['meter_sale_price'].median()) if this_period_count != 0 else 0
-    flat_sales_selected_previous_period = flat_sales[(flat_sales['reg_type_id']==registry_code)&(flat_sales['area_name_en']==select_area)&(flat_sales['txs_date']<=end_date - datetime.timedelta(days=365))&(flat_sales['txs_date']>=end_date - datetime.timedelta(days=455))]
-    previous_period_count = flat_sales_selected_previous_period['transaction_id'].count()
-    this_period_txs_count_prct_chg = (this_period_count-previous_period_count)/previous_period_count if this_period_count != 0 else 0
-    last_period_median_meter_price = flat_sales_selected_previous_period['meter_sale_price'].median()
-    this_period_median_meter_price_prct_chg = (this_period_median_meter_price-last_period_median_meter_price)/last_period_median_meter_price
-    this_period_median_flat_size = int(flat_sales_selected_period['procedure_area'].median())
-    last_period_median_flat_size = flat_sales_selected_previous_period['procedure_area'].median()
-    this_period_median_flat_size_prct_chg = (this_period_median_flat_size-last_period_median_flat_size)/last_period_median_flat_size
-    kpi1,kpi2,kpi3 = st.columns(3)
-    kpi1.metric("Last 90 Days txs count",f"{this_period_count:,}","{0:.0%}".format(this_period_txs_count_prct_chg))
-    kpi2.metric("last 90 Days median meter price : ",f"{this_period_median_meter_price:,}","{0:.0%}".format(this_period_median_meter_price_prct_chg))
-    kpi3.metric("Last 90 Days median flat size (SQM) : ",f"{this_period_median_flat_size:,}","{0:.0%}".format(this_period_median_flat_size_prct_chg))
-    this_period_1bed_txs = flat_sales_selected_period[flat_sales_selected_period['Rooms']==2]
-    this_period_1bed_median_price = int(this_period_1bed_txs['actual_worth'].median(skipna = False))
-    last_period_1bed_txs = flat_sales_selected_previous_period[flat_sales_selected_previous_period['Rooms']==2]
-    last_period_1bed_median_price = last_period_1bed_txs['actual_worth'].median()
-    this_period_1bed_price_pct_chg = ((this_period_1bed_median_price-last_period_1bed_median_price)/last_period_1bed_median_price)
-    this_period_2bed_txs = flat_sales_selected_period[flat_sales_selected_period['Rooms']==3]
-    this_period_2bed_median_price = this_period_2bed_txs['actual_worth'].median()
-    if pd.isna(this_period_2bed_median_price):
-        this_period_2bed_median_price = 0
-    this_period_2bed_median_price = int(this_period_2bed_median_price)
-    last_period_2bed_txs = flat_sales_selected_previous_period[flat_sales_selected_previous_period['Rooms']==3]
-    last_period_2bed_median_price = last_period_2bed_txs['actual_worth'].median()
-    this_period_2bed_price_pct_chg = ((this_period_2bed_median_price-last_period_2bed_median_price)/last_period_2bed_median_price)
-    this_period_3bed_txs = flat_sales_selected_period[flat_sales_selected_period['Rooms']==4]
-    this_period_3bed_median_price = this_period_3bed_txs['actual_worth'].median()
-    if pd.isna(this_period_3bed_median_price):
-        this_period_3bed_median_price = 0
-    this_period_3bed_median_price = int(this_period_3bed_median_price)
-    last_period_3bed_txs = flat_sales_selected_previous_period[flat_sales_selected_previous_period['Rooms']==4]
-    last_period_3bed_median_price = last_period_3bed_txs['actual_worth'].median()
-    this_period_3bed_price_pct_chg = ((this_period_3bed_median_price-last_period_3bed_median_price)/last_period_3bed_median_price)
-    flat_sales_select = flat_sales[(flat_sales['reg_type_id']==registry_code)&(flat_sales['area_name_en'] == select_area)&(flat_sales['Rooms']>=2)&(flat_sales['Rooms'] <=4)&(flat_sales['fst_day'] >= start_day)&(flat_sales['fst_day'] <= end_day)]
-    single_area_median_prices = pd.DataFrame(flat_sales_select.groupby(['Room_En','fst_day']).agg(single_area_median_meter_price = ('meter_sale_price','median'),single_area_median_price = ('actual_worth','median'), single_area_txs_count = ('transaction_id','count')))  
-    single_area_median_prices_df = single_area_median_prices.reset_index()
-    single_area_qtr_median_prices = pd.DataFrame(flat_sales_select.groupby(['Room_En','fst_qtr']).agg(single_area_qtr_median_meter_price = ('meter_sale_price','median'),single_area_qtr_median_price = ('actual_worth','median'), single_area_txs_count = ('transaction_id','count')))  
-    single_area_qtr_median_prices_df = single_area_qtr_median_prices.reset_index()
-    single_area_median_prices_df['rolling_mean'] = single_area_median_prices_df.set_index('fst_day').groupby('Room_En', sort=False)['single_area_median_price'].rolling(9).mean().round(0).to_numpy()
-    single_area_median_prices_df['meter_rolling_mean'] = single_area_median_prices_df.set_index('fst_day').groupby('Room_En', sort=False)['single_area_median_meter_price'].rolling(9).mean().round(0).to_numpy()
-    single_area_median_prices_df['txs_count_rolling_mean'] = single_area_median_prices_df.set_index('fst_day').groupby('Room_En', sort=False)['single_area_txs_count'].rolling(9).mean().round(0).to_numpy()
-    single_area_median_prices_start_df = single_area_median_prices_df[single_area_median_prices_df['fst_day']==start_day]
-    single_area_median_prices_added_start_df = pd.merge(single_area_median_prices_df,single_area_median_prices_start_df,left_on="Room_En",right_on="Room_En",how = "left")
-    single_area_median_prices_added_start_df['price_pct_chg'] = 100*(single_area_median_prices_added_start_df['single_area_median_price_x']-single_area_median_prices_added_start_df['single_area_median_price_y'])/single_area_median_prices_added_start_df['single_area_median_price_y']
-    single_area_median_prices_added_start_df['meter_price_pct_chg'] = 100*(single_area_median_prices_added_start_df['single_area_median_meter_price_x']-single_area_median_prices_added_start_df['single_area_median_meter_price_y'])/single_area_median_prices_added_start_df['single_area_median_meter_price_y']
-    kpi4,kpi5,kpi6 = st.columns(3)
-    kpi4.metric("Last 90 Days 1 B/R median Price",f"{this_period_1bed_median_price:,}","{0:.0%}".format(this_period_1bed_price_pct_chg))
-    kpi5.metric("Last 90 Days 2 B/R median Price",f"{this_period_2bed_median_price:,}","{0:.0%}".format(this_period_2bed_price_pct_chg))
-    kpi6.metric("Last 90 Days 3 B/R median Price",f"{this_period_3bed_median_price:,}","{0:.0%}".format(this_period_3bed_price_pct_chg))
-    st.subheader("Last 90 Days txs Scatter Plot (Price vs Size)")
-    base = alt.Chart(flat_sales_selected_period).properties(height=300)
-    point = base.mark_circle(size=20).encode(x=alt.X('actual_worth' + ':Q', title="price"), y=alt.Y('procedure_area' + ':Q', title="size"),color=alt.Color('Room_En', title='Rooms',legend=alt.Legend(orient='bottom-right')))
-    st.altair_chart(point, use_container_width=True)
-    
-    st.markdown("##")
-    st.subheader("Historical Trend of Flats' Prices and transactions count (Quarterly and 9 months moving average trend)")
-    room_radio_selection = st.radio("Select Flat Rooms:", options = ['1 B/R','2 B/R','3 B/R'],horizontal = True)
-    rolling_room_selection = single_area_median_prices_df[single_area_median_prices_df.Room_En == room_radio_selection]
-    qtr_median_room_selection = single_area_qtr_median_prices_df[single_area_qtr_median_prices_df.Room_En == room_radio_selection]
-    base10 = alt.Chart(qtr_median_room_selection).properties(height=300)
-    line10 = base10.mark_bar(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('single_area_qtr_median_price', title='median price'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    base11 = alt.Chart(rolling_room_selection).properties(height=300)
-    #line11 = base11.mark_line(size=2).encode(x=alt.X('fst_day', title='Date'),y=alt.Y('rolling_mean', title='rolling median price'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    line11 = base11.mark_line(color='red').encode(x=alt.X('fst_day', title='Date'),y=alt.Y('rolling_mean', title='rolling median price'))
-    chart10 = (line10 + line11)
-    #st.altair_chart(chart10,use_container_width=True)
-    base12 = alt.Chart(qtr_median_room_selection).properties(height=300)
-    line12 = base12.mark_bar(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('single_area_qtr_median_meter_price', title='median meter price'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    base13 = alt.Chart(rolling_room_selection).properties(height=300)
-    #line13 = base13.mark_line(size=2).encode(x=alt.X('fst_day', title='Date'),y=alt.Y('meter_rolling_mean', title='rolling median meter price'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    line13 = base13.mark_line(color='red').encode(x=alt.X('fst_day', title='Date'),y=alt.Y('meter_rolling_mean', title='rolling median meter price'))
-    chart12 = (line12 + line13)
-    #st.altair_chart(chart12,use_container_width=True)
-    base14 = alt.Chart(qtr_median_room_selection).properties(height=300)
-    line14 = base14.mark_bar(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('single_area_txs_count', title='Qtr txs count'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    base15 = alt.Chart(rolling_room_selection).properties(height=300)
-    line15 = base15.mark_line(color='red').encode(x=alt.X('fst_day', title='Date'),y=alt.Y('txs_count_rolling_mean', title='Monthly Moving Average'))
-    chart14 = (line14 + line15)
-    #st.altair_chart(chart14,use_container_width=True)
-    tab1, tab2 , tab3 = st.tabs(["Median Prices", "Median Meter Prices", "Transactions Count"])
-    with tab1:
-        st.altair_chart(chart10,use_container_width=True)
-    with tab2:
-        st.altair_chart(chart12,use_container_width=True)
-    with tab3:
-        st.altair_chart(chart14,use_container_width=True)
-    
-    #col1, col2 = st.columns(2)
-    #with col1:
-        #base1 = alt.Chart(single_area_median_prices_df).properties(height=300)
-        #line1 = base1.mark_line(size=2).encode(x=alt.X('fst_day', title='Date'),y=alt.Y('single_area_median_price', title='median price'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-        #st.altair_chart(line1,use_container_width=True)
-    #with col2:
-        #base2 = alt.Chart(single_area_median_prices_df).properties(height=300)
-        #line2 = base2.mark_line(size=2).encode(x=alt.X('fst_day', title='Date'),y=alt.Y('single_area_median_meter_price', title='median meter price'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-        #st.altair_chart(line2,use_container_width=True)
-    #col1,col2 = st.columns(2)
-    #with col1:
-    st.markdown("##")
-    st.subheader("Historical Graphs on Flats Prices and Activities Quarterly Trend (median flat price, median meter price & txs count)")
-    base5 = alt.Chart(single_area_qtr_median_prices_df).properties(height=300)
-    line5 = base5.mark_line(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('single_area_qtr_median_price', title='median price'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    base3 = alt.Chart(single_area_median_prices_df).properties(height=300)
-    line3 = base3.mark_line(size=2).encode(x=alt.X('fst_day', title='Date'),y=alt.Y('rolling_mean', title='rolling median price'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    base7 = alt.Chart(single_area_qtr_median_prices_df).properties(height=300)
-    line7 = base7.mark_line(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('single_area_qtr_median_meter_price', title='meter_median price'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    base4 = alt.Chart(single_area_median_prices_df).properties(height=300)
-    line4 = base4.mark_line(size=2).encode(x=alt.X('fst_day', title='Date'),y=alt.Y('meter_rolling_mean', title='meter rolling median price'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    base6 = alt.Chart(single_area_qtr_median_prices_df).properties(height=300)
-    line6 = base6.mark_line(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('single_area_txs_count', title='txs count'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    base8 = alt.Chart(single_area_median_prices_df).properties(height=300)
-    line8 = base8.mark_line(size=2).encode(x=alt.X('fst_day', title='Date'),y=alt.Y('txs_count_rolling_mean', title='monthly txs count ma'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    tab1, tab2 = st.tabs(["Quarterly Median Prices", "Median Prices Moving Average"])
-    with tab1:
-        st.altair_chart(line5,use_container_width=True)
-    with tab2:
-        st.altair_chart(line3,use_container_width=True)
-    tab3, tab4 = st.tabs(["Quarterly Median Meter Prices", "Median Meter Prices Moving Average"])
-    with tab3:
-        st.altair_chart(line7,use_container_width=True)
-    with tab4:
-        st.altair_chart(line4,use_container_width=True)
-    tab5, tab6 = st.tabs(["Quarterly Txs Count", "Txs Count Moving Average"])
-    with tab5:
-        st.altair_chart(line6,use_container_width=True)
-    with tab6:
-        st.altair_chart(line8,use_container_width=True)
-    
-    base5 = alt.Chart(single_area_qtr_median_prices_df).properties(height=300)
-    line5 = base5.mark_line(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('single_area_qtr_median_price', title='median price'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    st.altair_chart(line5,use_container_width=True)
-    base7 = alt.Chart(single_area_qtr_median_prices_df).properties(height=300)
-    line7 = base7.mark_line(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('single_area_qtr_median_meter_price', title='meter_median price'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    st.altair_chart(line7,use_container_width=True)
-    base6 = alt.Chart(single_area_qtr_median_prices_df).properties(height=300)
-    line6 = base6.mark_line(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('single_area_txs_count', title='txs count'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    st.altair_chart(line6,use_container_width=True)
-    st.subheader("Monthly Moving Averages Graphs (median price, median meter price & txs count)")
-    base3 = alt.Chart(single_area_median_prices_df).properties(height=300)
-    line3 = base3.mark_line(size=2).encode(x=alt.X('fst_day', title='Date'),y=alt.Y('rolling_mean', title='rolling median price'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    st.altair_chart(line3,use_container_width=True)
-    #with col2:
-    base4 = alt.Chart(single_area_median_prices_df).properties(height=300)
-    line4 = base4.mark_line(size=2).encode(x=alt.X('fst_day', title='Date'),y=alt.Y('meter_rolling_mean', title='meter rolling median price'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    st.altair_chart(line4,use_container_width=True)
-    base8 = alt.Chart(single_area_median_prices_df).properties(height=300)
-    line8 = base8.mark_line(size=2).encode(x=alt.X('fst_day', title='Date'),y=alt.Y('txs_count_rolling_mean', title='monthly txs count ma'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    st.altair_chart(line8,use_container_width=True)
-    #flat_sales_select = flat_sales[(flat_sales['reg_type_en']==registry)]
-    
-    room_radio_selection = st.radio("Select Flat Rooms:", options = ['1 B/R','2 B/R','3 B/R'],horizontal = True)
-    rolling_room_selection = single_area_median_prices_df[single_area_median_prices_df.Room_En == room_radio_selection]
-    qtr_median_room_selection = single_area_qtr_median_prices_df[single_area_qtr_median_prices_df.Room_En == room_radio_selection]
-    base10 = alt.Chart(qtr_median_room_selection).properties(height=300)
-    line10 = base10.mark_bar(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('single_area_qtr_median_price', title='median price'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    base11 = alt.Chart(rolling_room_selection).properties(height=300)
-    #line11 = base11.mark_line(size=2).encode(x=alt.X('fst_day', title='Date'),y=alt.Y('rolling_mean', title='rolling median price'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    line11 = base11.mark_line(color='red').encode(x=alt.X('fst_day', title='Date'),y=alt.Y('rolling_mean', title='rolling median price'))
-    chart10 = (line10 + line11)
-    #st.altair_chart(chart10,use_container_width=True)
-    base12 = alt.Chart(qtr_median_room_selection).properties(height=300)
-    line12 = base12.mark_bar(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('single_area_qtr_median_meter_price', title='median meter price'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    base13 = alt.Chart(rolling_room_selection).properties(height=300)
-    #line13 = base13.mark_line(size=2).encode(x=alt.X('fst_day', title='Date'),y=alt.Y('meter_rolling_mean', title='rolling median meter price'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    line13 = base13.mark_line(color='red').encode(x=alt.X('fst_day', title='Date'),y=alt.Y('meter_rolling_mean', title='rolling median meter price'))
-    chart12 = (line12 + line13)
-    #st.altair_chart(chart12,use_container_width=True)
-    base14 = alt.Chart(qtr_median_room_selection).properties(height=300)
-    line14 = base14.mark_bar(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('single_area_txs_count', title='Qtr txs count'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    base15 = alt.Chart(rolling_room_selection).properties(height=300)
-    line15 = base15.mark_line(color='red').encode(x=alt.X('fst_day', title='Date'),y=alt.Y('txs_count_rolling_mean', title='Monthly Moving Average'))
-    chart14 = (line14 + line15)
-    #st.altair_chart(chart14,use_container_width=True)
-    tab1, tab2 , tab3 = st.tabs(["Median Prices", "Median Meter Prices", "Transactions Count"])
-    with tab1:
-        st.altair_chart(chart10,use_container_width=True)
-    with tab2:
-        st.altair_chart(chart12,use_container_width=True)
-    with tab3:
-        st.altair_chart(chart14,use_container_width=True)
-        
-        
-if option == 'Comparative Areas Performance Bis': 
-    #st.header(option)
-    #st.markdown("Area performance is determined by the area flat median price percentage change for the last 90 days period compared to same period last year")
-    registry = st.sidebar.selectbox('Select registry type?',('Existing Properties','Off-Plan Properties'))
-    if registry == "Existing Properties":
-        registry_code = 1
-    else:
-        registry_code = 0
-    select_rooms = st.sidebar.selectbox('Select Flat Rooms', ('1 B/R','2 B/R','3 B/R'))
+if  option == 'Villas Transactions Search':
     st.header(option)
-    st.markdown("Area performance is determined by the area flat median price percentage change for the last 90 days period compared to same period last year")
-    end_date = flat_sales['txs_date'].max()
-    start_date = end_date - datetime.timedelta(days=90)
-    flat_sales_selected_period = flat_sales[(flat_sales['reg_type_id']==registry_code)&(flat_sales['Room_En'] == select_rooms)&(flat_sales['txs_date']<=end_date)&(flat_sales['txs_date']>=start_date)]
-    flat_sales_selected_period_summary = pd.DataFrame(flat_sales_selected_period.groupby(['area_name_en']).agg(area_median_meter_price = ('meter_sale_price','median'),area_median_price = ('actual_worth','median'), area_txs_count = ('transaction_id','count'),flat_median_size = ('procedure_area','median')))
-    flat_sales_selected_period_summary_df = flat_sales_selected_period_summary.reset_index()
-    flat_sales_selected_previous_period = flat_sales[(flat_sales['reg_type_id']==registry_code)&(flat_sales['Room_En'] == select_rooms)&(flat_sales['txs_date']<=end_date - datetime.timedelta(days=365))&(flat_sales['txs_date']>=end_date - datetime.timedelta(days=455))]
-    flat_sales_selected_previous_period_summary = pd.DataFrame(flat_sales_selected_previous_period.groupby(['area_name_en']).agg(previous_area_median_meter_price = ('meter_sale_price','median'),previous_area_median_price = ('actual_worth','median'), previous_area_txs_count = ('transaction_id','count')))
-    flat_sales_selected_previous_period_summary_df = flat_sales_selected_previous_period_summary.reset_index()
-    merged_current_previous_period = pd.merge(flat_sales_selected_period_summary_df,flat_sales_selected_previous_period_summary_df,on = "area_name_en",how = "left")
-    merged_current_previous_period['median_meter_price_prct_chg'] = 100* (merged_current_previous_period['area_median_meter_price']-merged_current_previous_period['previous_area_median_meter_price'])/merged_current_previous_period['previous_area_median_meter_price']
-    merged_current_previous_period['median_price_prct_chg'] = 100 * (merged_current_previous_period['area_median_price']-merged_current_previous_period['previous_area_median_price'])/merged_current_previous_period['previous_area_median_price']
-    merged_current_previous_period['area_txs_count_prct_chg'] = 100 * (merged_current_previous_period['area_txs_count']-merged_current_previous_period['previous_area_txs_count'])/merged_current_previous_period['previous_area_txs_count']
-    merged_subset = merged_current_previous_period[['area_name_en','area_median_price','median_price_prct_chg','area_median_meter_price','median_meter_price_prct_chg','flat_median_size','area_txs_count','area_txs_count_prct_chg']]
-    merged_subset['perf_class'] = merged_subset['median_price_prct_chg'].apply(lambda x: perf_class(x))
-    #merged_subset.rename(columns = {'area_name_en':'Area Name','area_median_price':'Med. Price','median_price_prct_chg':'% Price Chg','area_median_meter_price':'Med. Mtr Price','median_meter_price_prct_chg':'% Mtr Chg','flat_median_size' : 'Flat Size','area_txs_count':'Txs Count','area_txs_count_prct_chg':'% Txs Chg'},inplace = True)
-    #merged_subset['% Price Chg'] = merged_subset['% Price Chg'].astype(float).map("{:.2%}".format)
-    #merged_subset['% Mtr Chg'] = merged_subset['% Mtr Chg'].astype(float).map("{:.2%}".format)
-    #merged_subset['% Txs Chg'] = merged_subset['% Txs Chg'].astype(float).map("{:.2%}".format)
-    #merged_subset['Med. Price'] = merged_subset['Med. Price'].astype(int)
-    #merged_subset['Med. Mtr Price'] = merged_subset['Med. Mtr Price'].astype(int)
-    #merged_subset['Flat Size'] = merged_subset['Flat Size'].astype(int)
-    #st.dataframe(merged_subset)
-    #print_some_rows = merged_subset.head(5)
-    #print(print_some_rows)
-    #with st.sidebar:
-        #add_radio = st.radio("Sorting Result by:",("Area Name", "Flat Price","Txs Count"))
-    st.markdown('###')
-    st.subheader("Interactive Areas Performance Chart")
-    #st.markdown('')
-    perf_radio_selection = st.radio("Select Area Performance Range:", options = ['All ranges','more than 20%','btw 5 to 20%','btw -5 & 5%','btw -20 & -5%','less than -20%'],horizontal = True)
-    #slider1,slider2,slider3= st.columns(3)
-    #with slider1:
-      #  slider1 = st.slider("Price prct Change Range:",min_value = merged_subset['median_price_prct_chg'].min(),max_value = merged_subset['median_price_prct_chg'].max(),value = (merged_subset['median_price_prct_chg'].min(),merged_subset['median_price_prct_chg'].max()))
-    #with slider2:
-        #slider2 = st.slider("Txs Count Range :",min_value = float(merged_subset['area_txs_count'].min()),max_value=float(merged_subset['area_txs_count'].max()), value = (float(merged_subset['area_txs_count'].min()),float(merged_subset['area_txs_count'].max())),step = 10.0)
-    #with slider3:
-        #slider3 = st.slider("Meter Price Range :",min_value = merged_subset['area_median_meter_price'].min(),max_value = merged_subset['area_median_meter_price'].max(),value = (merged_subset['area_median_meter_price'].min(),merged_subset['area_median_meter_price'].max()))
-    if perf_radio_selection == "All ranges":
-        reduced_merged = merged_subset
-        base20 = alt.Chart(reduced_merged).properties(height=300)
-        point20 = base20.mark_point(size=20).encode(x=alt.X('area_median_price' + ':Q', title="price"), y=alt.Y('flat_median_size' + ':Q', title="Flat Size"),size = 'area_txs_count', tooltip = ['area_name_en','area_txs_count','area_median_price','area_median_meter_price','flat_median_size','median_price_prct_chg'],color=alt.Color('perf_class', title='Area Med. Value vs Size',legend=alt.Legend(orient='right'))).interactive()
-        st.altair_chart(point20, use_container_width=True)
-    else: 
-        reduced_merged = merged_subset[(merged_subset['perf_class'] == perf_radio_selection)]
-        base20 = alt.Chart(reduced_merged).properties(height=300)
-        point20 = base20.mark_point(size=20).encode(x=alt.X('area_median_price' + ':Q', title="price"), y=alt.Y('flat_median_size' + ':Q', title="Flat Size"), tooltip = ['area_name_en','area_txs_count','area_median_price','area_median_meter_price','flat_median_size','median_price_prct_chg'],color=alt.Color('perf_class', title='Area Med. Value vs Size',legend=alt.Legend(orient='right')))
-        label20 = point20.mark_text(align='left',baseline='middle',dx=1).encode(text='area_name_en')
-        chart20 = (point20 + label20).interactive()
-        st.altair_chart(chart20, use_container_width=True)
-    #point10_text = base10.mark_text
-    #point10 = base10.mark_point(size=20).encode(x=alt.X('area_median_price' + ':Q', title="price"), y=alt.Y('flat_median_size' + ':Q', title="Flat Size"),size = 'area_txs_count')
-    text = point20.mark_text(align='left',baseline='middle',dx=1).encode(text='area_name_en')
-    chart = (point20 + text)
-    st.altair_chart(chart, use_container_width=True)
-    st.markdown('###')
-    st.subheader('Areas Performance Details (for selected performance range)')
-    st.dataframe(reduced_merged)
+    st.markdown("- Villas transactions search is provided for the last 30 days (or part of it depending on dates selection)")
+    st.markdown("- Results can be sorted on each column (ascending,desending)")
+    registry = st.sidebar.selectbox('Select registry type?',('Existing Properties','Off-Plan Properties'))
+    if registry == "Existing Properties":
+        registry_code = 1
+    else:
+        registry_code = 0
+    start_size, end_size = st.slider("Select Villa Size Range", min_value= 50, max_value=2000, value=(100, 1000),step = 10)
+
+    #select_rooms = st.sidebar.multiselect('Select Flat Rooms', ('1 B/R','2 B/R','3 B/R','Studio'),'1 B/R')
+    end_date = villa_sales['txs_date'].max()
+    start_date = end_date - datetime.timedelta(days=30)
+    start = st.sidebar.date_input("Start Date", value = start_date)
+    end = st.sidebar.date_input("End Date",value = end_date)
+    villa_area = villa_sales['area_name_en'].unique()
+    select_area = st.sidebar.multiselect('Select area?',villa_area,villa_area[34])
+    select_txs = villa_sales[(villa_sales['reg_type_id']==registry_code)&(villa_sales['area_name_en'].isin(select_area))&(villa_sales['procedure_area'] >= start_size)&(villa_sales['procedure_area'] <= end_size)&(villa_sales['txs_date']<=end_date)&(villa_sales['txs_date']>=start_date)]
+    select_txs['date'] = pd.to_datetime(select_txs['txs_date']).dt.date
+    display_txs = select_txs[['date','area_name_en','project_name_en','procedure_area','actual_worth','meter_sale_price']]
+    st.dataframe(display_txs)
+
+if  option == 'Lands Transactions Search':
+    st.header(option)
+    st.markdown("- Lands transactions search is provided for the last 30 days (or part of it depending on dates selection)")
+    st.markdown("- Results can be sorted on each column (ascending,desending)")
+    start_size, end_size = st.slider("Select Land Size Range", min_value= 200, max_value=5000, value=(100, 2000),step = 100)
+
+    #select_rooms = st.sidebar.multiselect('Select Flat Rooms', ('1 B/R','2 B/R','3 B/R','Studio'),'1 B/R')
+    end_date = land_sales['txs_date'].max()
+    start_date = end_date - datetime.timedelta(days=30)
+    start = st.sidebar.date_input("Start Date", value = start_date)
+    end = st.sidebar.date_input("End Date",value = end_date)
+    land_area = land_sales['area_name_en'].unique()
+    select_area = st.sidebar.multiselect('Select area?',land_area,land_area[34])
+    select_txs = land_sales[(land_sales['area_name_en'].isin(select_area))&(land_sales['procedure_area'] >= start_size)&(land_sales['procedure_area'] <= end_size)&(land_sales['txs_date']<=end_date)&(land_sales['txs_date']>=start_date)]
+    select_txs['date'] = pd.to_datetime(select_txs['txs_date']).dt.date
+    display_txs = select_txs[['date','area_name_en','project_name_en','procedure_area','actual_worth','meter_sale_price']]
+    st.dataframe(display_txs)    
+    
