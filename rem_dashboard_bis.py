@@ -137,9 +137,19 @@ def tot_count(x,y,z):
     intermediate = agg_flat_sales_filter[agg_flat_sales_filter.fst_qtr==z]
     total_count = intermediate['qtr_txs'].sum()
     return total_count
+def tot_mth_count(x,y,z):
+    agg_flat_sales_filter = all_registry_rooms_mth_median_prices[(all_registry_rooms_mth_median_prices.registry == x)&(all_registry_rooms_mth_median_prices.Room_En == y)]
+    intermediate = agg_flat_sales_filter[agg_flat_sales_filter.fst_day==z]
+    total_count = intermediate['mth_txs'].sum()
+    return total_count
 def agg_area_prices(x,y,z):
     agg_flat_sales_filter = area_summary_copy[(area_summary_copy.registry == x)&(area_summary_copy.Room_En == y)]
     intermediate = agg_flat_sales_filter[agg_flat_sales_filter.fst_qtr == z]
+    agg_relative_price = intermediate['relative_price'].sum()
+    return agg_relative_price
+def agg_area_mth_prices(x,y,z):
+    agg_flat_sales_filter = area_summary_mth_copy[(area_summary_mth_copy.registry == x)&(area_summary_mth_copy.Room_En == y)]
+    intermediate = agg_flat_sales_filter[agg_flat_sales_filter.fst_day == z]
     agg_relative_price = intermediate['relative_price'].sum()
     return agg_relative_price
 def period_count(x,y):
@@ -200,7 +210,7 @@ st.sidebar.markdown("*Settings*")
 #st.sidebar.markdown('###')
 #item1 = st.sidebar.selectbox('Item 1', item_list, index=0)
 #item2 = st.sidebar.selectbox('Item 2', item_list, index=3)
-option = st.sidebar.selectbox("Select Dashboard?", ('Market Historical Trend','Comparative Areas Performance (flats)','Area Specific Flats Prices Analysis', 'Flats Transactions Search','Comparative Areas Performance (villas)','Area Specific Villas Prices Analysis','Villas Transactions Search','Comparative Areas Performance (lands)','Area Specific Lands Prices Analysis','Lands Transactions Search','Flat Price Estimation'))
+option = st.sidebar.selectbox("Select Dashboard?", ('Overview','Market Historical Trend','Comparative Areas Performance (flats)','Area Specific Flats Prices Analysis', 'Flats Transactions Search','Comparative Areas Performance (villas)','Area Specific Villas Prices Analysis','Villas Transactions Search','Comparative Areas Performance (lands)','Area Specific Lands Prices Analysis','Lands Transactions Search','Flat Price Estimation'))
 if option == 'Area Specific Flats Prices Analysis':
     registry = st.sidebar.selectbox('Select registry type?',('Existing Properties','Off-Plan Properties'))
     if registry == "Existing Properties":
@@ -860,6 +870,21 @@ if  option == 'Market Historical Trend':
     #st.dataframe(all_registry_rooms_qtr_median_prices)
     #st.markdown("##")
     #st.subheader("Historical Graphs on Flats Prices and Activities Quarterly Trend (median flat price, median meter price & txs count)")
+    all_registry_rooms_area_mth_median_prices = pd.DataFrame(flat_sales_select.groupby(['registry','Room_En','area_name_en','fst_day']).agg(mth_median_meter_price = ('meter_sale_price','median'),mth_median_price = ('actual_worth','median'), txs_mth_count = ('transaction_id','count'))).reset_index()
+    #st.dataframe(all_registry_rooms_area_qtr_median_prices)
+    all_registry_rooms_mth_median_prices = pd.DataFrame(all_registry_rooms_area_mth_median_prices.groupby(['registry','Room_En','fst_day']).agg(mth_txs = ('txs_mth_count','sum'))).reset_index()
+    #st.dataframe(all_registry_rooms_qtr_median_prices)
+    #test = tot_count("OffPlan","1 B/R","2011-04-01")
+    #st.write(test)
+    #all_registry_rooms_area_qtr_median_prices['relative_weight'] = all_registry_rooms_area_qtr_median_prices.apply(lambda x:x['txs_count']/tot_count(x['registry'],x['Room_En'],x['fst_qtr']),axis = 1)
+    #st.dataframe(all_registry_rooms_area_qtr_median_prices)
+    area_summary_mth_copy = all_registry_rooms_area_mth_median_prices.copy(deep = True)
+    #st.dataframe(area_summary_copy)
+    area_summary_mth_copy['relative_weight'] = area_summary_mth_copy.apply(lambda x:x['txs_mth_count']/tot_mth_count(x['registry'],x['Room_En'],x['fst_day']),axis = 1)
+    area_summary_mth_copy['relative_price'] = area_summary_mth_copy.apply(lambda x:(x['relative_weight'])*(x['mth_median_price']),axis = 1)
+    #st.dataframe(area_summary_copy)
+    all_registry_rooms_mth_median_prices['composite_median_price'] = all_registry_rooms_mth_median_prices.apply(lambda x:agg_area_mth_prices(x['registry'],x['Room_En'],x['fst_day']),axis=1)
+    all_registry_rooms_mth_median_prices['rolling_mean'] = all_registry_rooms_mth_median_prices.set_index('fst_day').groupby('Room_En', sort=False)['composite_median_price'].rolling(9).mean().round(0).to_numpy()
     flat_sales_select_period = flat_sales_select[flat_sales_select['txs_date']>=start_date]
     period_flat_count = flat_sales_select_period['transaction_id'].count()
     period_registry_rooms_area_median_prices = pd.DataFrame(flat_sales_select_period.groupby(['registry','Room_En','area_name_en']).agg(period_median_meter_price = ('meter_sale_price','median'),period_median_price = ('actual_worth','median'), txs_count = ('transaction_id','count'))).reset_index()
@@ -883,9 +908,12 @@ if  option == 'Market Historical Trend':
     initial_3BD = all_registry_rooms_qtr_median_prices[(all_registry_rooms_qtr_median_prices.Room_En == "3 B/R")&(all_registry_rooms_qtr_median_prices.fst_qtr == '2010-01-01')]
     initial_3BD_composite = initial_3BD['composite_median_price'].sum()
     period_3BD_composite_prct_chg = (period_3BD_composite - initial_3BD_composite) / initial_3BD_composite
-    base1 = alt.Chart(all_registry_rooms_qtr_median_prices).properties(height=300)
+    base1 = alt.Chart(all_registry_rooms_qtr_median_prices).properties(height=400)
     line1 = base1.mark_line(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('composite_median_price', title='Composite Median Price'),tooltip = ['fst_qtr','Room_En','composite_median_price','qtr_txs'],color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
     st.altair_chart(line1,use_container_width=True)
+    base11 = alt.Chart(all_registry_rooms_mth_median_prices).properties(height=400)
+    line11 = base11.mark_line(size=2).encode(x=alt.X('fst_day:T', title='Date'),y=alt.Y('rolling_mean:Q', title='Rolling Composite Median Price'),tooltip = ['fst_day','Room_En','rolling_mean','mth_txs'],color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
+    st.altair_chart(line11,use_container_width=True)
     st.markdown("Flats Current Market performance is measured by the percent change of composite price for last 90 days compared to initial period (first quarter of 2010). Performance is shown by the three indicators below:")
     kpi1,kpi2,kpi3 = st.columns(3)
     kpi1.metric("Last 90 Days 1 B/R composite median Price",f"{period_1BD_composite:,}","{0:.0%}".format(period_1BD_composite_prct_chg))
@@ -1116,3 +1144,15 @@ if  option == 'Test':
     st.markdown('###')
     st.subheader('Areas Performance Details (for selected performance range)')
     st.dataframe(reduced_merged)
+    
+if option == 'Overview':
+    st.header(option + " of the Real Estate Market Analysis (REManalysis) Application")
+    st.subheader("- REManalysis application is empowered by Digital Dubai Authority and Dubai Lands Department open data available at their respective web sites.")
+    st.subheader("- The application aims to provide non-biased, science based oversight on the Dubai Real estate market.")
+    st.subheader("- REManalysis application addresses information needs and support investment decision of variety of audiences: individual investors, brokers, realtors or developers.")
+    st.subheader("- Oversight and analysis cover the macro view as well detailed specific view such as:")
+    st.markdown("    - **Historical trend of properties median prices (Flats, Villas and Land parcels).**")
+    st.markdown("    - **Short term view (Year over Year) of areas performance with respect to each property class.**")
+    st.markdown("    - **Area specific analysis (long and short term view) with respect to each property class.**")
+    st.markdown('    - **Flats price estimation based on certain flat attributes using some machine learning techniques.**')
+    st.subheader("- Best efforts have been made to provide correct and trusted results. ")
