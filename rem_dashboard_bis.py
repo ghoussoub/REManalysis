@@ -200,7 +200,7 @@ st.sidebar.markdown("*Settings*")
 #st.sidebar.markdown('###')
 #item1 = st.sidebar.selectbox('Item 1', item_list, index=0)
 #item2 = st.sidebar.selectbox('Item 2', item_list, index=3)
-option = st.sidebar.selectbox("Select Dashboard?", ('Test','Market Historical Trend','Comparative Areas Performance (flats)','Area Specific Flats Prices Analysis', 'Flats Transactions Search','Comparative Areas Performance (villas)','Area Specific Villas Prices Analysis','Villas Transactions Search','Comparative Areas Performance (lands)','Area Specific Lands Prices Analysis','Lands Transactions Search','Flat Price Estimation'))
+option = st.sidebar.selectbox("Select Dashboard?", ('Market Historical Trend','Comparative Areas Performance (flats)','Area Specific Flats Prices Analysis', 'Flats Transactions Search','Comparative Areas Performance (villas)','Area Specific Villas Prices Analysis','Villas Transactions Search','Comparative Areas Performance (lands)','Area Specific Lands Prices Analysis','Lands Transactions Search','Flat Price Estimation'))
 if option == 'Area Specific Flats Prices Analysis':
     registry = st.sidebar.selectbox('Select registry type?',('Existing Properties','Off-Plan Properties'))
     if registry == "Existing Properties":
