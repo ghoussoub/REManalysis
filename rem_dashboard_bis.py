@@ -80,7 +80,6 @@ def load_model():
     regr = pickle.load(file)
     file.close()
     return regr
-
 def perf_class(x):
     if x >= 20:
          perf = "more than 20%"
@@ -198,7 +197,7 @@ land_sales = lands.copy(deep = True)
 land_sales['land_usage'] = land_sales['property_usage_en'].apply(lambda x: land_class(x))
 st.sidebar.title("Dubai Real Estates Market Dashboards")
 #st.sidebar.markdown('###')
-st.sidebar.markdown("*Settings*")
+st.sidebar.markdown("**Settings**")
 #start_year, end_year = st.sidebar.slider(
     #"Period",
     #min_value=min_year, max_value=max_year,
@@ -210,18 +209,19 @@ st.sidebar.markdown("*Settings*")
 #st.sidebar.markdown('###')
 #item1 = st.sidebar.selectbox('Item 1', item_list, index=0)
 #item2 = st.sidebar.selectbox('Item 2', item_list, index=3)
-option = st.sidebar.selectbox("Select Dashboard?", ('Overview','Market Historical Trend','Comparative Areas Performance (flats)','Area Specific Flats Prices Analysis', 'Flats Transactions Search','Comparative Areas Performance (villas)','Area Specific Villas Prices Analysis','Villas Transactions Search','Comparative Areas Performance (lands)','Area Specific Lands Prices Analysis','Lands Transactions Search','Flat Price Estimation'))
+option = st.sidebar.selectbox("**Select Dashboard?**", ('Overview','Market Historical Trend','Comparative Areas Performance (flats)','Area Specific Flats Prices Analysis', 'Flats Transactions Search','Comparative Areas Performance (villas)','Area Specific Villas Prices Analysis','Villas Transactions Search','Comparative Areas Performance (lands)','Area Specific Lands Prices Analysis','Lands Transactions Search','Flat Price Estimation'))
 if option == 'Area Specific Flats Prices Analysis':
-    registry = st.sidebar.selectbox('Select registry type?',('Existing Properties','Off-Plan Properties'))
+    registry = st.sidebar.selectbox('**Select registry type?**',('Existing Properties','Off-Plan Properties'))
     if registry == "Existing Properties":
         registry_code = 1
     else:
         registry_code = 0
     flat_area = flat_sales['area_name_en'].unique()
-    select_area = st.sidebar.selectbox('Select area?',flat_area)
+    select_area = st.sidebar.selectbox('**Select area?**',flat_area)
     #st.header("Area Market Analysis of : {}".format(select_area))
-    st.header(option+" in : {}".format(select_area))
-    st.markdown("The metrics below are calculated based on last 90 days period compared to same period last year (YoY)")
+    st.header(":blue[Area Specific Flats Prices Analysis]"+":blue[ of :] ")
+    st.subheader(select_area)
+    st.markdown("**The metrics below are calculated based on last 90 days period compared to same period last year (YoY)**")
     #select_rooms = st.sidebar.multiselect('Select Flat Rooms', ("1 B/R","2 B/R","3 B/R"),"1 B/R")
     #slider_year = st.sidebar.slider("Period",2010, int(df['year'].max()))
     #start = st.sidebar.date_input("Start Date", value = pd.to_datetime('2010-01-01'))
@@ -247,9 +247,9 @@ if option == 'Area Specific Flats Prices Analysis':
     last_period_median_flat_size = flat_sales_selected_previous_period['procedure_area'].median()
     this_period_median_flat_size_prct_chg = (this_period_median_flat_size-last_period_median_flat_size)/last_period_median_flat_size
     kpi1,kpi2,kpi3 = st.columns(3)
-    kpi1.metric("Last 90 Days txs count",f"{this_period_count:,}","{0:.0%}".format(this_period_txs_count_prct_chg))
-    kpi2.metric("last 90 Days median meter price : ",f"{this_period_median_meter_price:,}","{0:.0%}".format(this_period_median_meter_price_prct_chg))
-    kpi3.metric("Last 90 Days median flat size (SQM) : ",f"{this_period_median_flat_size:,}","{0:.0%}".format(this_period_median_flat_size_prct_chg))
+    kpi1.metric("**Last 90 Days txs count**",f"{this_period_count:,}","{0:.0%}".format(this_period_txs_count_prct_chg))
+    kpi2.metric("**last 90 Days median meter price**",f"{this_period_median_meter_price:,}","{0:.0%}".format(this_period_median_meter_price_prct_chg))
+    kpi3.metric("**Last 90 Days median flat size (SQM)**",f"{this_period_median_flat_size:,}","{0:.0%}".format(this_period_median_flat_size_prct_chg))
     this_period_1bed_txs = flat_sales_selected_period[flat_sales_selected_period['Rooms']==2]
     this_period_1bed_median_price = int(this_period_1bed_txs['actual_worth'].median(skipna = False))
     last_period_1bed_txs = flat_sales_selected_previous_period[flat_sales_selected_previous_period['Rooms']==2]
@@ -284,9 +284,9 @@ if option == 'Area Specific Flats Prices Analysis':
     single_area_median_prices_added_start_df['price_pct_chg'] = 100*(single_area_median_prices_added_start_df['single_area_median_price_x']-single_area_median_prices_added_start_df['single_area_median_price_y'])/single_area_median_prices_added_start_df['single_area_median_price_y']
     single_area_median_prices_added_start_df['meter_price_pct_chg'] = 100*(single_area_median_prices_added_start_df['single_area_median_meter_price_x']-single_area_median_prices_added_start_df['single_area_median_meter_price_y'])/single_area_median_prices_added_start_df['single_area_median_meter_price_y']
     kpi4,kpi5,kpi6 = st.columns(3)
-    kpi4.metric("Last 90 Days 1 B/R median Price",f"{this_period_1bed_median_price:,}","{0:.0%}".format(this_period_1bed_price_pct_chg))
-    kpi5.metric("Last 90 Days 2 B/R median Price",f"{this_period_2bed_median_price:,}","{0:.0%}".format(this_period_2bed_price_pct_chg))
-    kpi6.metric("Last 90 Days 3 B/R median Price",f"{this_period_3bed_median_price:,}","{0:.0%}".format(this_period_3bed_price_pct_chg))
+    kpi4.metric("**Last 90 Days 1 B/R median Price**",f"{this_period_1bed_median_price:,}","{0:.0%}".format(this_period_1bed_price_pct_chg))
+    kpi5.metric("**Last 90 Days 2 B/R median Price**",f"{this_period_2bed_median_price:,}","{0:.0%}".format(this_period_2bed_price_pct_chg))
+    kpi6.metric("**Last 90 Days 3 B/R median Price**",f"{this_period_3bed_median_price:,}","{0:.0%}".format(this_period_3bed_price_pct_chg))
     st.subheader("Last 90 Days txs Scatter Plot (Price vs Size)")
     base = alt.Chart(flat_sales_selected_period).properties(height=300)
     point = base.mark_circle(size=20).encode(x=alt.X('actual_worth' + ':Q', title="price"), y=alt.Y('procedure_area' + ':Q', title="size"),color=alt.Color('Room_En', title='Rooms',legend=alt.Legend(orient='bottom-right')))
@@ -294,7 +294,7 @@ if option == 'Area Specific Flats Prices Analysis':
     
     st.markdown("##")
     st.subheader("Historical Trend of Flats' Prices and transactions count (Quarterly and 9 months moving average trend)")
-    room_radio_selection = st.radio("Select Flat Rooms:", options = ['1 B/R','2 B/R','3 B/R'],horizontal = True)
+    room_radio_selection = st.radio("**Select Flat Rooms:**", options = ['1 B/R','2 B/R','3 B/R'],horizontal = True)
     rolling_room_selection = single_area_median_prices_df[single_area_median_prices_df.Room_En == room_radio_selection]
     qtr_median_room_selection = single_area_qtr_median_prices_df[single_area_qtr_median_prices_df.Room_En == room_radio_selection]
     base10 = alt.Chart(qtr_median_room_selection).properties(height=300)
@@ -317,7 +317,7 @@ if option == 'Area Specific Flats Prices Analysis':
     line15 = base15.mark_line(color='red').encode(x=alt.X('fst_day', title='Date'),y=alt.Y('txs_count_rolling_mean', title='Monthly Moving Average'))
     chart14 = (line14 + line15)
     #st.altair_chart(chart14,use_container_width=True)
-    tab1, tab2 , tab3 = st.tabs(["Median Prices", "Median Meter Prices", "Transactions Count"])
+    tab1, tab2 , tab3 = st.tabs(["**Median Prices**", "**Median Meter Prices**", "**Transactions Count**"])
     with tab1:
         st.altair_chart(chart10,use_container_width=True)
     with tab2:
@@ -329,14 +329,14 @@ if option == 'Area Specific Flats Prices Analysis':
 if option == 'Comparative Areas Performance (flats)': 
     #st.header(option)
     #st.markdown("Area performance is determined by the area flat median price percentage change for the last 90 days period compared to same period last year")
-    registry = st.sidebar.selectbox('Select registry type?',('Existing Properties','Off-Plan Properties'))
+    registry = st.sidebar.selectbox('**Select registry type?**',('Existing Properties','Off-Plan Properties'))
     if registry == "Existing Properties":
         registry_code = 1
     else:
         registry_code = 0
-    select_rooms = st.sidebar.selectbox('Select Flat Rooms', ('1 B/R','2 B/R','3 B/R'))
-    st.header(option)
-    st.markdown("Area performance is determined by the area flat median price percentage change for the last 90 days period compared to same period last year")
+    select_rooms = st.sidebar.selectbox('**Select Flat Rooms?**', ('1 B/R','2 B/R','3 B/R'))
+    st.header(":blue[Comparative Areas Performance (flats)]")
+    st.markdown("**Area performance is determined by the area flat median price percentage change for the _last 90 days period_ compared to _same period last year_**")
     end_date = flat_sales['txs_date'].max()
     start_date = end_date - datetime.timedelta(days=90)
     flat_sales_selected_period = flat_sales[(flat_sales['reg_type_id']==registry_code)&(flat_sales['Room_En'] == select_rooms)&(flat_sales['txs_date']<=end_date)&(flat_sales['txs_date']>=start_date)]
@@ -366,7 +366,7 @@ if option == 'Comparative Areas Performance (flats)':
     st.markdown('###')
     st.subheader("Interactive Areas Performance Chart")
     #st.markdown('')
-    perf_radio_selection = st.radio("Select Area Performance Range:", options = ['All ranges','more than 20%','btw 5 to 20%','btw -5 & 5%','btw -20 & -5%','less than -20%'],horizontal = True)
+    perf_radio_selection = st.radio("**Select Area Performance Range:**", options = ['All ranges','more than 20%','btw 5 to 20%','btw -5 & 5%','btw -20 & -5%','less than -20%'],horizontal = True)
     #slider1,slider2,slider3= st.columns(3)
     #with slider1:
       #  slider1 = st.slider("Price prct Change Range:",min_value = merged_subset['median_price_prct_chg'].min(),max_value = merged_subset['median_price_prct_chg'].max(),value = (merged_subset['median_price_prct_chg'].min(),merged_subset['median_price_prct_chg'].max()))
@@ -388,28 +388,28 @@ if option == 'Comparative Areas Performance (flats)':
     st.subheader('Areas Performance Details (for selected performance range)')
     st.dataframe(reduced_merged)
 if  option == 'Flats Transactions Search':
-    st.header(option)
-    st.markdown("- Flats transactions search is provided for the last 30 days (or part of it depending on dates selection)")
-    st.markdown("- Results can be sorted on each column (ascending,desending)")
-    registry = st.sidebar.selectbox('Select registry type?',('Existing Properties','Off-Plan Properties'))
+    st.header(":blue[Flats Transactions Search]")
+    st.markdown("**- Flats transactions search is provided for the last 30 days (or part of it depending on dates selection)**")
+    st.markdown("**- Results can be sorted on each column (ascending,desending)**")
+    registry = st.sidebar.selectbox('**Select registry type?**',('Existing Properties','Off-Plan Properties'))
     if registry == "Existing Properties":
         registry_code = 1
     else:
         registry_code = 0
-    select_rooms = st.sidebar.multiselect('Select Flat Rooms', ('1 B/R','2 B/R','3 B/R','Studio'),'1 B/R')
+    select_rooms = st.sidebar.multiselect('**Select Flat Rooms**', ('1 B/R','2 B/R','3 B/R','Studio'),'1 B/R')
     end_date = flat_sales['txs_date'].max()
     start_date = end_date - datetime.timedelta(days=30)
-    start = st.sidebar.date_input("Start Date", value = start_date)
-    end = st.sidebar.date_input("End Date",value = end_date)
+    start = st.sidebar.date_input("**Start Date**", value = start_date)
+    end = st.sidebar.date_input("**End Date**",value = end_date)
     flat_area = flat_sales['area_name_en'].unique()
-    select_area = st.sidebar.multiselect('Select area?',flat_area,flat_area[3])
+    select_area = st.sidebar.multiselect('**Select area?**',flat_area,flat_area[3])
     select_txs = flat_sales[(flat_sales['reg_type_id']==registry_code)&(flat_sales['area_name_en'].isin(select_area))&(flat_sales['Room_En'].isin(select_rooms))&(flat_sales['txs_date']<=end_date)&(flat_sales['txs_date']>=start_date)]
     select_txs['date'] = pd.to_datetime(select_txs['txs_date']).dt.date
     display_txs = select_txs[['date','area_name_en','building_name_en','Room_En','actual_worth','procedure_area','meter_sale_price']]
     st.dataframe(display_txs)
 if  option == 'Flat Price Estimation':
-    st.header(option)
-    st.write('This Application makes an estimation of an existing flat price using machine learning technique and based on Open Data provided by Dubai Government (Digital Dubai Authority & Dubai Lands Department).')
+    st.header(":blue[Flat Price Estimation]")
+    st.write('**This Application makes an estimation of an existing flat price using machine learning technique and based on Open Data provided by Dubai Government (Digital Dubai Authority & Dubai Lands Department).**')
     #area = pd.read_csv(r'area.csv',encoding=('utf_8'))
     area = load_areas()
     area.sort_values(by=['area_name_en'], inplace=True)
@@ -417,13 +417,13 @@ if  option == 'Flat Price Estimation':
     building = load_buildings()
     #Rooms = pd.read_csv(r'rooms.csv',encoding=('utf_8'))
     Rooms = load_rooms()
-    selected_area = st.selectbox('Select Area',area['area_name_en'])
+    selected_area = st.selectbox('**Select Area**',area['area_name_en'])
     building_list = building[building['area_name_en']==selected_area]
-    selected_building = st.selectbox('Select Building',building_list['building_name_en'])
-    selected_room_no = st.selectbox('No of Rooms', options = ['Studio','1 B/R','2 B/R','3 B/R'])
+    selected_building = st.selectbox('**Select Building**',building_list['building_name_en'])
+    selected_room_no = st.selectbox('**No of Rooms**', options = ['Studio','1 B/R','2 B/R','3 B/R'])
     rooms_selected_record = Rooms[Rooms['Room_En']==selected_room_no]
     rooms = rooms_selected_record['Rooms']
-    flat_size = st.number_input('Select Flat Size (SQM)',min_value=20,max_value=500)
+    flat_size = st.number_input('**Select Flat Size (SQM)**',min_value=20,max_value=500)
     area_selected_record = area[area['area_name_en']==selected_area]
     area_med_price = area_selected_record['area_median_meter_price']
     area_building_id = selected_area+"/"+selected_building
@@ -442,22 +442,22 @@ if  option == 'Flat Price Estimation':
     regr = load_model()
     result = regr.predict(X_new)
     result_format = str(f"{int(result):,}")
-    st.write(f"Prediction Result: **{result_format}**")
-    st.write(' (The estimated value should be taken as a starting point of the estimation/valuation process and will not replace a real estates professional assessment!)')
+    st.write(f":red[**Prediction Result:**] **{result_format}**")
+    st.write(' (**The estimated value should be taken as a starting point of the estimation/valuation process and will not replace a real estates professional assessment!)**')
     #st.write("Rooms : ",rooms)
     #x_new = [[3,16,131,11787,10053]]
     #result = regr.predict(x_new)
     #print("Prediction: ",result) 
      #"C:\Users\ghous\.spyder-py3\streamlit_apps\streamlit_apps\random_forest_regression.pkl"
 if  option == 'Comparative Areas Performance (villas)':
-    st.header(option)
-    st.markdown("Area performance is determined by the area villa median price percentage change for the last 90 days period compared to same period last year")
-    registry = st.sidebar.selectbox('Select registry type?',('Existing Properties','Off-Plan Properties'))
+    st.header(":blue[Comparative Areas Performance (villas)]")
+    st.markdown("**Area performance is determined by the area villa median price percentage change for the _last 90 days period_ compared to _same period last year_**")
+    registry = st.sidebar.selectbox('**Select registry type?**',('Existing Properties','Off-Plan Properties'))
     if registry == "Existing Properties":
         registry_code = 1
     else:
         registry_code = 0
-    select_size_range = st.sidebar.selectbox('Select Villa Size', ('All Sizes','less than 100','btw 100 to 200','btw 200 to 300','btw 300 to 400','btw 400 to 500','more than 500 SQM'))
+    select_size_range = st.sidebar.selectbox('**Select Villa Size Range**', ('All Sizes','less than 300','btw 300 to 600','more than 600 SQM'))
     end_date = villa_sales['txs_date'].max()
     start_date = end_date - datetime.timedelta(days=90)
     villa_sales['size_range'] = villa_sales['procedure_area'].apply(lambda x: size_range(x))
@@ -493,7 +493,7 @@ if  option == 'Comparative Areas Performance (villas)':
     st.markdown('###')
     st.header("Interactive Areas Performance Chart")
     #st.markdown('')
-    perf_radio_selection = st.radio("Select Area Performance Range:", options = ['All ranges','more than 20%','btw 5 to 20%','btw -5 & 5%','btw -20 & -5%','less than -20%'],horizontal = True)
+    perf_radio_selection = st.radio("**Select Area Performance Range:**", options = ['All ranges','more than 20%','btw 5 to 20%','btw -5 & 5%','btw -20 & -5%','less than -20%'],horizontal = True)
     #slider1,slider2,slider3= st.columns(3)
     #with slider1:
       #  slider1 = st.slider("Price prct Change Range:",min_value = merged_subset['median_price_prct_chg'].min(),max_value = merged_subset['median_price_prct_chg'].max(),value = (merged_subset['median_price_prct_chg'].min(),merged_subset['median_price_prct_chg'].max()))
@@ -516,7 +516,7 @@ if  option == 'Comparative Areas Performance (villas)':
     st.dataframe(reduced_merged)
 if  option == 'Area Specific Villas Prices Analysis':
     villa_area = villa_sales['area_name_en'].unique()
-    select_area = st.sidebar.selectbox('Select area?',villa_area)
+    select_area = st.sidebar.selectbox('**Select area?**',villa_area)
     #registry = st.sidebar.selectbox('Select registry type?',('Existing Properties','Off-Plan Properties'))
     #if registry == "Existing Properties":
         #registry_code = 1
@@ -525,9 +525,10 @@ if  option == 'Area Specific Villas Prices Analysis':
     #villa_area = villa_sales['area_name_en'].unique()
     #select_area = st.sidebar.selectbox('Select area?',villa_area)
     #st.header("Area Market Analysis of : {}".format(select_area))
-    st.header(option+" in : {}".format(select_area))
-    st.subheader("Villas key metrics")
-    st.markdown("The metrics below are calculated based on last 90 days period compared to same period last year (YoY)")
+    st.header(":blue[Area Specific Villas Prices Analysis of:]")
+    st.subheader(select_area)
+    #st.subheader("Villas key metrics")
+    st.markdown("**The metrics below are calculated based on _last 90 days period_ compared to _same period last year (YoY)_**")
     #select_rooms = st.sidebar.multiselect('Select Flat Rooms', ("1 B/R","2 B/R","3 B/R"),"1 B/R")
     #slider_year = st.sidebar.slider("Period",2010, int(df['year'].max()))
     #start = st.sidebar.date_input("Start Date", value = pd.to_datetime('2010-01-01'))
@@ -542,19 +543,20 @@ if  option == 'Area Specific Villas Prices Analysis':
     start_date = end_date - datetime.timedelta(days=90)
     #flat_sales_selected_period = flat_sales[(flat_sales['reg_type_id']==registry_code)&(flat_sales['area_name_en']==select_area)&(flat_sales['Room_En'].isin( select_rooms))&(flat_sales['txs_date']<=end_date)&(flat_sales['txs_date']>=start_date)]
     #perf_radio_selection = st.radio("Select Area Performance Range:", options = ['All ranges','more than 20%','btw 5 to 20%','btw -5 & 5%','btw -20 & -5%','less than -20%'],horizontal = True)
-    registry = st.radio('Select registry type?',('Existing Properties','Off-Plan Properties'),horizontal = True)
+    registry = st.radio('**Select registry type?**',('Existing Properties','Off-Plan Properties'),horizontal = True)
     if registry == "Existing Properties":
         registry_code = 1
     else:
         registry_code = 0
     villa_sales_selected_period = villa_sales[(villa_sales['reg_type_id']==registry_code)&(villa_sales['area_name_en']==select_area)&(villa_sales['txs_date']<=end_date)&(villa_sales['txs_date']>=start_date)&(villa_sales['procedure_area']>=50)&(villa_sales['procedure_area']<=2000)]
     this_period_count = villa_sales_selected_period['transaction_id'].count()
-    this_period_median_meter_price = int(villa_sales_selected_period['meter_sale_price'].median()) if this_period_count != 0 else "N/A"
+    #this_period_median_meter_price = int(villa_sales_selected_period['meter_sale_price'].median()) if this_period_count != 0 else "N/A"
+    this_period_median_meter_price = int(villa_sales_selected_period['meter_sale_price'].median()) if this_period_count != 0 else 0
     #if this_period_count != 0:
         #this_period_median_meter_price = int(villa_sales_selected_period['meter_sale_price'].median(skipna = False))
     #else:
         #this_period_median_meter_price = "N/A"
-    this_period_median_price = int(villa_sales_selected_period['actual_worth'].median()) if this_period_count != 0 else "N/A"
+    this_period_median_price = int(villa_sales_selected_period['actual_worth'].median()) if this_period_count != 0 else 0
     #if this_period_count != 0:
         #this_period_median_price = int(villa_sales_selected_period['actual_worth'].median())
     #else:
@@ -563,17 +565,18 @@ if  option == 'Area Specific Villas Prices Analysis':
     previous_period_count = villa_sales_selected_previous_period['transaction_id'].count()
     this_period_txs_count_prct_chg = (this_period_count-previous_period_count)/previous_period_count if this_period_count != 0 else 0
     last_period_median_meter_price = villa_sales_selected_previous_period['meter_sale_price'].median()
-    this_period_median_meter_price_prct_chg = (this_period_median_meter_price-last_period_median_meter_price)/last_period_median_meter_price if this_period_count != 0 else "N/A"
-    last_period_median_price = villa_sales_selected_previous_period['actual_worth'].median() if this_period_count != 0 else "N/A"
-    this_period_median_price_prct_chg = (this_period_median_price-last_period_median_price)/last_period_median_price if this_period_count else "N/A"
-    this_period_median_villa_size = int(villa_sales_selected_period['procedure_area'].median()) if this_period_count != 0 else "N/A"
-    last_period_median_villa_size = villa_sales_selected_previous_period['procedure_area'].median() if this_period_count != 0 else "N/A"
-    this_period_median_villa_size_prct_chg = (this_period_median_villa_size-last_period_median_villa_size)/last_period_median_villa_size if this_period_count != 0 else "N/A"
+    #this_period_median_meter_price_prct_chg = (this_period_median_meter_price-last_period_median_meter_price)/last_period_median_meter_price if this_period_count != 0 else "N/A"
+    this_period_median_meter_price_prct_chg = (this_period_median_meter_price-last_period_median_meter_price)/last_period_median_meter_price if this_period_count != 0 else 0
+    last_period_median_price = villa_sales_selected_previous_period['actual_worth'].median() if this_period_count != 0 else 0
+    this_period_median_price_prct_chg = (this_period_median_price-last_period_median_price)/last_period_median_price if this_period_count else 0
+    this_period_median_villa_size = int(villa_sales_selected_period['procedure_area'].median()) if this_period_count != 0 else 0
+    last_period_median_villa_size = villa_sales_selected_previous_period['procedure_area'].median() if this_period_count != 0 else 0
+    this_period_median_villa_size_prct_chg = (this_period_median_villa_size-last_period_median_villa_size)/last_period_median_villa_size if this_period_count != 0 else 0
     kpi1,kpi2,kpi3,kpi4 = st.columns(4)
-    kpi1.metric("Last 90 Days txs count",f"{this_period_count:,}","{0:.0%}".format(this_period_txs_count_prct_chg))
-    kpi2.metric("last 90 Days median meter price : ",f"{this_period_median_meter_price:,}","{0:.0%}".format(this_period_median_meter_price_prct_chg))
-    kpi3.metric("Last 90 Days median villa size (SQM) : ",f"{this_period_median_villa_size:,}","{0:.0%}".format(this_period_median_villa_size_prct_chg))
-    kpi4.metric("last 90 Days median price : ",f"{this_period_median_price:,}","{0:.0%}".format(this_period_median_price_prct_chg))
+    kpi1.metric("**Last 90 Days txs count**",f"{this_period_count:,}","{0:.0%}".format(this_period_txs_count_prct_chg))
+    kpi2.metric("**last 90 Days median meter price**",f"{this_period_median_meter_price:,}","{0:.0%}".format(this_period_median_meter_price_prct_chg))
+    kpi3.metric("**Last 90 Days median villa size (SQM)**",f"{this_period_median_villa_size:,}","{0:.0%}".format(this_period_median_villa_size_prct_chg))
+    kpi4.metric("**last 90 Days median price**",f"{this_period_median_price:,}","{0:.0%}".format(this_period_median_price_prct_chg))
     villa_sales_select = villa_sales[(villa_sales['area_name_en'] == select_area)&(villa_sales['procedure_area']>=50)&(villa_sales['procedure_area'] <=2000)&(villa_sales['fst_day'] >= start_day)&(villa_sales['fst_day'] <= end_day)]
     #villa_sales_select['registry'] = villa_sales_select['reg_type_id'].apply(lambda x: "Ready" if x == 1 else "OffPlan")
     single_area_median_prices = pd.DataFrame(villa_sales_select.groupby(['registry','fst_day']).agg(single_area_median_meter_price = ('meter_sale_price','median'),single_area_median_price = ('actual_worth','median'), single_area_txs_count = ('transaction_id','count')))  
@@ -610,7 +613,7 @@ if  option == 'Area Specific Villas Prices Analysis':
     #with col1:
     st.markdown("##")
     st.subheader("Historical Trend of Villas' Prices and transactions count (Quarterly and 9 months moving average trend)")
-    registry_radio_selection = st.radio("Select Villa Registry Type:", options = ['Ready','OffPlan'],horizontal = True)
+    registry_radio_selection = st.radio("**Select Villa Registry Type:**", options = ['Ready','OffPlan'],horizontal = True)
     villa_sales_qtr_trend = single_area_qtr_median_prices_df[(single_area_qtr_median_prices_df['registry']==registry_radio_selection)]    
     villa_sales_monthly_trend = single_area_median_prices_df[(single_area_median_prices_df['registry'] == registry_radio_selection)]
     #st.markdown("##")
@@ -650,9 +653,9 @@ if  option == 'Comparative Areas Performance (lands)':
     #land_sales = df[(df['trans_group_id']==1)&(df['property_type_id']==1)&(df['procedure_area']<=10000)]
     #land_sales['land_usage'] = land_sales['property_usage_en'].apply(lambda x: land_class(x))
 
-    st.header(option)
-    st.markdown("Area performance is determined by the area land median meter price percentage change for the last 90 days period compared to same period last year")
-    select_size_range = st.sidebar.selectbox('Select Land Size', ('All Sizes','less than 100','btw 100 to 200','btw 200 to 500','btw 500 to 1000','btw 1000 to 2000','more than 2000 SQM'))
+    st.header(":blue[Comparative Areas Performance (lands)]")
+    st.markdown("**Area performance is determined by the area land median meter price percentage change for _the last 90 days period_ compared to _same period last year_**")
+    select_size_range = st.sidebar.selectbox('**Select Land Size**', ('All Sizes','less than 100','btw 100 to 200','btw 200 to 500','btw 500 to 1000','btw 1000 to 2000','more than 2000 SQM'))
     end_date = land_sales['txs_date'].max()
     start_date = end_date - datetime.timedelta(days=90)
     land_sales['land_size_range'] = land_sales['procedure_area'].apply(lambda x: land_size_range(x))
@@ -688,7 +691,7 @@ if  option == 'Comparative Areas Performance (lands)':
     st.markdown('###')
     st.header("Interactive Areas Performance Chart")
     #st.markdown('')
-    perf_radio_selection = st.radio("Select Area Performance Range:", options = ['All ranges','more than 20%','btw 5 to 20%','btw -5 & 5%','btw -20 & -5%','less than -20%'],horizontal = True)
+    perf_radio_selection = st.radio("**Select Area Performance Range:**", options = ['All ranges','more than 20%','btw 5 to 20%','btw -5 & 5%','btw -20 & -5%','less than -20%'],horizontal = True)
     #slider1,slider2,slider3= st.columns(3)
     #with slider1:
       #  slider1 = st.slider("Price prct Change Range:",min_value = merged_subset['median_price_prct_chg'].min(),max_value = merged_subset['median_price_prct_chg'].max(),value = (merged_subset['median_price_prct_chg'].min(),merged_subset['median_price_prct_chg'].max()))
@@ -715,9 +718,9 @@ if  option == 'Area Specific Lands Prices Analysis':
 
     land_area = land_sales['area_name_en'].unique()
     select_area = st.sidebar.selectbox('Select area?',land_area)
-    st.header(option+" in : {}".format(select_area))
-    st.subheader("Lands key metrics")
-    st.markdown("The metrics below are calculated based on last 90 days period lands prices compared to same period last year (YoY)")
+    st.header(":blue[Area Specific Lands Prices Analysis of :]")
+    st.subheader(select_area)
+    st.markdown("**The metrics below are calculated based on _last 90 days period_ lands prices compared to _same period last year (YoY)_**")
     #select_rooms = st.sidebar.multiselect('Select Flat Rooms', ("1 B/R","2 B/R","3 B/R"),"1 B/R")
     #slider_year = st.sidebar.slider("Period",2010, int(df['year'].max()))
     #start = st.sidebar.date_input("Start Date", value = pd.to_datetime('2010-01-01'))
@@ -755,10 +758,10 @@ if  option == 'Area Specific Lands Prices Analysis':
     last_period_median_land_size = land_sales_selected_previous_period['procedure_area'].median() if this_period_count != 0 else 0
     this_period_median_land_size_prct_chg = (this_period_median_land_size-last_period_median_land_size)/last_period_median_land_size if this_period_count != 0 else 0
     kpi1,kpi2,kpi3,kpi4 = st.columns(4)
-    kpi1.metric("Last 90 Days txs count",f"{this_period_count:,}","{0:.0%}".format(this_period_txs_count_prct_chg))
-    kpi2.metric("last 90 Days median meter price : ",f"{this_period_median_meter_price:,}","{0:.0%}".format(this_period_median_meter_price_prct_chg))
-    kpi3.metric("Last 90 Days median land size (SQM) : ",f"{this_period_median_land_size:,}","{0:.0%}".format(this_period_median_land_size_prct_chg))
-    kpi4.metric("last 90 Days median price : ",f"{this_period_median_price:,}","{0:.0%}".format(this_period_median_price_prct_chg))
+    kpi1.metric("**Last 90 Days txs count**",f"{this_period_count:,}","{0:.0%}".format(this_period_txs_count_prct_chg))
+    kpi2.metric("**last 90 Days median meter price**",f"{this_period_median_meter_price:,}","{0:.0%}".format(this_period_median_meter_price_prct_chg))
+    kpi3.metric("**Last 90 Days median land size (SQM)**",f"{this_period_median_land_size:,}","{0:.0%}".format(this_period_median_land_size_prct_chg))
+    kpi4.metric("**last 90 Days median price**",f"{this_period_median_price:,}","{0:.0%}".format(this_period_median_price_prct_chg))
     land_sales_select = land_sales[(land_sales['area_name_en'] == select_area)&(land_sales['procedure_area']>=50)&(land_sales['procedure_area'] <=10000)&(land_sales['fst_day'] >= start_day)&(land_sales['fst_day'] <= end_day)]
     #villa_sales_select['registry'] = villa_sales_select['reg_type_id'].apply(lambda x: "Ready" if x == 1 else "OffPlan")
     single_area_median_prices = pd.DataFrame(land_sales_select.groupby(['land_usage','fst_day']).agg(single_area_median_meter_price = ('meter_sale_price','median'),single_area_median_price = ('actual_worth','median'), single_area_txs_count = ('transaction_id','count')))  
@@ -795,7 +798,7 @@ if  option == 'Area Specific Lands Prices Analysis':
     #with col1:
     st.markdown("##")
     st.subheader("Historical Trend of Lands' Prices and transactions count (Quarterly and 9 months moving average trend)")
-    usage_radio_selection = st.radio("Select Land Usage Type:", options = ['Commercial','Residential','Industrial'],horizontal = True)    
+    usage_radio_selection = st.radio("**Select Land Usage Type:**", options = ['Commercial','Residential','Industrial'],horizontal = True)    
     land_sales_qtr_trend = single_area_qtr_median_prices_df[(single_area_qtr_median_prices_df['land_usage']==usage_radio_selection)]    
     land_sales_monthly_trend = single_area_median_prices_df[(single_area_median_prices_df['land_usage'] == usage_radio_selection)]
     #st.markdown("##")
@@ -823,7 +826,7 @@ if  option == 'Area Specific Lands Prices Analysis':
     chart10 = (line5 + line3)
     chart11 = (line7 + line4)
     chart12 = (line6 + line8)
-    tab1, tab2 , tab3 = st.tabs(["Median Prices", "Median Meter Prices", "Transactions Count"])
+    tab1, tab2 , tab3 = st.tabs(["**Median Prices**", "**Median Meter Prices**", "**Transactions Count**"])
     with tab1:
         st.altair_chart(chart10,use_container_width=True)
     with tab2:
@@ -832,13 +835,13 @@ if  option == 'Area Specific Lands Prices Analysis':
         st.altair_chart(chart12,use_container_width=True)
     
 if  option == 'Market Historical Trend':
-    registry = st.sidebar.radio("Select Flat/Villa Registry:", options = ['Existing Properties','Off-Plan Properties'],horizontal = True)
+    registry = st.sidebar.radio("**Select Flat/Villa Registry:**", options = ['Existing Properties','Off-Plan Properties'],horizontal = True)
     if registry == "Existing Properties":
         registry_code = 1
     else:
         registry_code = 0
-    st.header(option)
-    st.markdown("Market trend is represented by the Composite Prices Trend of flats, villas and lands. Composite prices are calculated as the sum of weighted area prices (where weights represent the relative value of transactions activities in each area for each calendar period/quarter)")
+    st.header(":blue[Market Historical Trends]")
+    st.markdown("**Market trend is represented by the Composite Prices Trend of flats, villas and lands. Composite prices are calculated as the sum of weighted area prices (where weights represent the relative value of transactions activities in each area for each calendar period/quarter)**")
     st.markdown('###')
     st.subheader("Flats Composite Prices Trend")
     #registry = st.sidebar.radio("Select Flat Registry:", options = ['Existing Properties','Off-Plan Properties'],horizontal = True)
@@ -910,15 +913,21 @@ if  option == 'Market Historical Trend':
     period_3BD_composite_prct_chg = (period_3BD_composite - initial_3BD_composite) / initial_3BD_composite
     base1 = alt.Chart(all_registry_rooms_qtr_median_prices).properties(height=400)
     line1 = base1.mark_line(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('composite_median_price', title='Composite Median Price'),tooltip = ['fst_qtr','Room_En','composite_median_price','qtr_txs'],color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    st.altair_chart(line1,use_container_width=True)
+    #st.altair_chart(line1,use_container_width=True)
     base11 = alt.Chart(all_registry_rooms_mth_median_prices).properties(height=400)
     line11 = base11.mark_line(size=2).encode(x=alt.X('fst_day:T', title='Date'),y=alt.Y('rolling_mean:Q', title='Rolling Composite Median Price'),tooltip = ['fst_day','Room_En','rolling_mean','mth_txs'],color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    st.altair_chart(line11,use_container_width=True)
-    st.markdown("Flats Current Market performance is measured by the percent change of composite price for last 90 days compared to initial period (first quarter of 2010). Performance is shown by the three indicators below:")
+    #st.altair_chart(line11,use_container_width=True)
+    tab1, tab2 = st.tabs(["**Composite median prices (qtr)**", "**Rolling (9 months) Composite Prices**"])
+    with tab1:
+        st.altair_chart(line1,use_container_width=True)
+    with tab2:
+        st.altair_chart(line11,use_container_width=True)
+    
+    st.markdown("**Flats Current Market performance is measured by the percent change of composite price for last 90 days compared to initial period (first quarter of 2010). Performance is shown by the three indicators below:**")
     kpi1,kpi2,kpi3 = st.columns(3)
-    kpi1.metric("Last 90 Days 1 B/R composite median Price",f"{period_1BD_composite:,}","{0:.0%}".format(period_1BD_composite_prct_chg))
-    kpi2.metric("Last 90 Days 2 B/R composite median Price",f"{period_2BD_composite:,}","{0:.0%}".format(period_2BD_composite_prct_chg))
-    kpi3.metric("Last 90 Days 3 B/R composite median Price",f"{period_3BD_composite:,}","{0:.0%}".format(period_3BD_composite_prct_chg))
+    kpi1.metric("**Last 90 Days 1 B/R composite median Price**",f"{period_1BD_composite:,}","{0:.0%}".format(period_1BD_composite_prct_chg))
+    kpi2.metric("**Last 90 Days 2 B/R composite median Price**",f"{period_2BD_composite:,}","{0:.0%}".format(period_2BD_composite_prct_chg))
+    kpi3.metric("**Last 90 Days 3 B/R composite median Price**",f"{period_3BD_composite:,}","{0:.0%}".format(period_3BD_composite_prct_chg))
     #base1 = alt.Chart(all_registry_rooms_qtr_median_prices).properties(height=300)
     #line1 = base1.mark_line(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('composite_median_price', title='Composite Median Price'),tooltip = ['fst_qtr','Room_En','composite_median_price','qtr_txs'],color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
     #st.altair_chart(line1,use_container_width=True)
@@ -975,11 +984,11 @@ if  option == 'Market Historical Trend':
     base2 = alt.Chart(all_registry_size_qtr_median_prices).properties(height=300)
     line2 = base2.mark_line(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('composite_villa_median_price', title='Composite Median Price'), tooltip = ['fst_qtr','size_range','composite_villa_median_price','qtr_txs'],color=alt.Color('size_range', title='Size Range',legend=alt.Legend(orient='right')))
     st.altair_chart(line2,use_container_width=True) 
-    st.markdown("Villas Current Market performance is measured by the percent change of composite price for last 90 days compared to initial period (first quarter of 2010). Performance is shown by the three indicators below:")
+    st.markdown("**Villas Current Market performance is measured by the percent change of composite price for last 90 days compared to initial period (first quarter of 2010). Performance is shown by the three indicators below:**")
     kpi1,kpi2,kpi3 = st.columns(3)
-    kpi1.metric("Last 90 Days Small composite median Price",f"{period_small_composite:,}","{0:.0%}".format(period_small_composite_prct_chg))
-    kpi2.metric("Last 90 Days Medium composite median Price",f"{period_medium_composite:,}","{0:.0%}".format(period_medium_composite_prct_chg))
-    kpi3.metric("Last 90 Days Large composite median Price",f"{period_large_composite:,}","{0:.0%}".format(period_large_composite_prct_chg))
+    kpi1.metric("**Last 90 Days Small composite median Price**",f"{period_small_composite:,}","{0:.0%}".format(period_small_composite_prct_chg))
+    kpi2.metric("**Last 90 Days Medium composite median Price**",f"{period_medium_composite:,}","{0:.0%}".format(period_medium_composite_prct_chg))
+    kpi3.metric("**Last 90 Days Large composite median Price**",f"{period_large_composite:,}","{0:.0%}".format(period_large_composite_prct_chg))
     
     #base2 = alt.Chart(all_registry_size_qtr_median_prices).properties(height=300)
     #line2 = base2.mark_line(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('composite_villa_median_price', title='Composite Median Price'), tooltip = ['fst_qtr','size_range','composite_villa_median_price','qtr_txs'],color=alt.Color('size_range', title='Size Range',legend=alt.Legend(orient='right')))
@@ -1034,10 +1043,10 @@ if  option == 'Market Historical Trend':
     base3 = alt.Chart(all_usage_qtr_median_meter_prices).properties(height=300)
     line3 = base3.mark_line(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('composite_land_median_meter_price', title='Composite Median Meter Price'), tooltip = ['fst_qtr','land_usage','composite_land_median_meter_price','qtr_txs'],color=alt.Color('land_usage', title='Land Usage',legend=alt.Legend(orient='right')))
     st.altair_chart(line3,use_container_width=True)     
-    st.markdown("Lands Current Market performance is measured by the percent change of composite price for last 90 days compared to initial period (first quarter of 2010). Performance is shown by the three indicators below:")
+    st.markdown("**Lands Current Market performance is measured by the percent change of composite price for last 90 days compared to initial period (first quarter of 2010). Performance is shown by the three indicators below:**")
     kpi1,kpi2 = st.columns(2)
-    kpi1.metric("Last 90 Days Commercial composite median Meter Price",f"{period_Commercial_composite:,}","{0:.0%}".format(period_Commercial_composite_prct_chg))
-    kpi2.metric("Last 90 Days Residential composite median Price",f"{period_Residential_composite:,}","{0:.0%}".format(period_Residential_composite_prct_chg))
+    kpi1.metric("**Last 90 Days Commercial composite median Meter Price**",f"{period_Commercial_composite:,}","{0:.0%}".format(period_Commercial_composite_prct_chg))
+    kpi2.metric("**Last 90 Days Residential composite median Price**",f"{period_Residential_composite:,}","{0:.0%}".format(period_Residential_composite_prct_chg))
     
 if  option == 'Villas Transactions Search':
     st.header(option)
@@ -1146,10 +1155,10 @@ if  option == 'Test':
     st.dataframe(reduced_merged)
     
 if option == 'Overview':
-    st.header(option + " of the Real Estate Market Analysis (REManalysis) Application")
+    st.header(" :blue[Overview of the Real Estate Market Analysis (REManalysis) Application]")
     st.subheader("- REManalysis application is empowered by Digital Dubai Authority and Dubai Lands Department open data available at their respective web sites.")
     st.subheader("- The application aims to provide non-biased, science based oversight on the Dubai Real estate market.")
-    st.subheader("- REManalysis application addresses information needs and support investment decision of variety of audiences: individual investors, brokers, realtors or developers.")
+    st.subheader("- REManalysis application addresses information needs and support investment decision of variety of audiences: individual investors, brokers, realtors, developers, economist or market analyst.")
     st.subheader("- Oversight and analysis cover the macro view as well detailed specific view such as:")
     st.markdown("    - **Historical trend of properties median prices (Flats, Villas and Land parcels).**")
     st.markdown("    - **Short term view (Year over Year) of areas performance with respect to each property class.**")
