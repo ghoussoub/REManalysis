@@ -195,6 +195,8 @@ villa_sales['registry'] = villa_sales['reg_type_id'].apply(lambda x: "Ready" if 
 lands = df2[df2.procedure_area <= 10000]
 land_sales = lands.copy(deep = True)
 land_sales['land_usage'] = land_sales['property_usage_en'].apply(lambda x: land_class(x))
+building = load_buildings()
+Rooms = load_rooms()
 st.sidebar.title("Dubai Real Estates Market Dashboards")
 #st.sidebar.markdown('###')
 st.sidebar.markdown("**Settings**")
@@ -287,10 +289,28 @@ if option == 'Area Specific Flats Prices Analysis':
     kpi4.metric("**Last 90 Days 1 B/R median Price**",f"{this_period_1bed_median_price:,}","{0:.0%}".format(this_period_1bed_price_pct_chg))
     kpi5.metric("**Last 90 Days 2 B/R median Price**",f"{this_period_2bed_median_price:,}","{0:.0%}".format(this_period_2bed_price_pct_chg))
     kpi6.metric("**Last 90 Days 3 B/R median Price**",f"{this_period_3bed_median_price:,}","{0:.0%}".format(this_period_3bed_price_pct_chg))
-    st.subheader("Last 90 Days txs Scatter Plot (Price vs Size)")
+    st.subheader("Last 90 Days txs Scatter Plot (Price vs Size vs Building Age)")
+    room_selection = st.radio("**Select Flat Rooms:**", options = ['All','1 B/R','2 B/R','3 B/R'],horizontal = True)
+    if room_selection != "All":
+        flat_sales_selected_period = flat_sales_selected_period[flat_sales_selected_period.Room_En == room_selection]
+    else:
+        pass
+    area_buildings = building[(building['area_name_en'] == select_area)]
+    #st.dataframe(area_buildings)
+    merged_flat_building = pd.merge(flat_sales_selected_period,area_buildings,left_on="building_name_en",right_on="building_name_en",how = "left")
+    #st.dataframe(merged_flat_building)
     base = alt.Chart(flat_sales_selected_period).properties(height=300)
     point = base.mark_circle(size=20).encode(x=alt.X('actual_worth' + ':Q', title="price"), y=alt.Y('procedure_area' + ':Q', title="size"),color=alt.Color('Room_En', title='Rooms',legend=alt.Legend(orient='bottom-right')))
-    st.altair_chart(point, use_container_width=True)
+    #st.altair_chart(point, use_container_width=True)
+    base1 = alt.Chart(merged_flat_building).properties(height = 300)
+    point1 = base1.mark_circle(size=20).encode(x=alt.X('actual_worth' + ':Q', title="price"), y=alt.Y('building_age' + ':Q', title="Bldg Age"),color=alt.Color('Room_En', title='Rooms',legend=alt.Legend(orient='bottom-right')))
+    #st.altair_chart(point1, use_container_width=True)
+    tab1, tab2 = st.tabs(["**Price vs Size**", "**Price vs Building Age**"])
+    with tab1:
+        st.altair_chart(point,use_container_width=True)
+    with tab2:
+        st.altair_chart(point1,use_container_width=True)
+    
     
     st.markdown("##")
     st.subheader("Historical Trend of Flats' Prices and transactions count (Quarterly and 9 months moving average trend)")
@@ -414,9 +434,9 @@ if  option == 'Flat Price Estimation':
     area = load_areas()
     area.sort_values(by=['area_name_en'], inplace=True)
     #building = pd.read_csv(r'building.csv',encoding=('utf_8'))
-    building = load_buildings()
+    #building = load_buildings()
     #Rooms = pd.read_csv(r'rooms.csv',encoding=('utf_8'))
-    Rooms = load_rooms()
+    #Rooms = load_rooms()
     selected_area = st.selectbox('**Select Area**',area['area_name_en'])
     building_list = building[building['area_name_en']==selected_area]
     selected_building = st.selectbox('**Select Building**',building_list['building_name_en'])
