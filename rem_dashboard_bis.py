@@ -52,6 +52,7 @@ def load_villas():
     #df['fst_day'] = pd.to_datetime(df['fst_day']).dt.date
     df['fst_day'] = pd.to_datetime(df['fst_day'],format='%d-%m-%Y')
     df['fst_qtr'] = pd.to_datetime(df['fst_qtr'],format='%d-%m-%Y')
+    df['size_range'] = df['procedure_area'].apply(lambda x: size_range(x))
     return(df)
 @st.cache()
 def load_lands():
@@ -95,12 +96,12 @@ def perf_class(x):
         perf = "N/A"
     return perf  
 def size_range(x):
-    if x >= 600:
-        range = "more than 600 SQM"
-    elif x < 600 and x >= 300:
-        range = "btw 300 to 600"
+    if x >= 500:
+        range = "more than 500 SQM"
+    elif x < 500 and x >= 250:
+        range = "btw 250 to 500"
     else:
-        range = "less than 300"
+        range = "less than 250"
     return range
 def land_class(x):
     #global land_usage
@@ -132,39 +133,39 @@ def land_size_range(x):
         range = "less than 100"
     return range
 def tot_count(x,y,z):
-    agg_flat_sales_filter = all_registry_rooms_qtr_median_prices[(all_registry_rooms_qtr_median_prices.registry == x)&(all_registry_rooms_qtr_median_prices.Room_En == y)]
+    agg_flat_sales_filter = all_registry_rooms_qtr_median_prices[(all_registry_rooms_qtr_median_prices.reg_type_id == x)&(all_registry_rooms_qtr_median_prices.Room_En == y)]
     intermediate = agg_flat_sales_filter[agg_flat_sales_filter.fst_qtr==z]
     total_count = intermediate['qtr_txs'].sum()
     return total_count
 def tot_mth_count(x,y,z):
-    agg_flat_sales_filter = all_registry_rooms_mth_median_prices[(all_registry_rooms_mth_median_prices.registry == x)&(all_registry_rooms_mth_median_prices.Room_En == y)]
+    agg_flat_sales_filter = all_registry_rooms_mth_median_prices[(all_registry_rooms_mth_median_prices.reg_type_id == x)&(all_registry_rooms_mth_median_prices.Room_En == y)]
     intermediate = agg_flat_sales_filter[agg_flat_sales_filter.fst_day==z]
     total_count = intermediate['mth_txs'].sum()
     return total_count
 def agg_area_prices(x,y,z):
-    agg_flat_sales_filter = area_summary_copy[(area_summary_copy.registry == x)&(area_summary_copy.Room_En == y)]
+    agg_flat_sales_filter = area_summary_copy[(area_summary_copy.reg_type_id == x)&(area_summary_copy.Room_En == y)]
     intermediate = agg_flat_sales_filter[agg_flat_sales_filter.fst_qtr == z]
     agg_relative_price = intermediate['relative_price'].sum()
     return agg_relative_price
 def agg_area_mth_prices(x,y,z):
-    agg_flat_sales_filter = area_summary_mth_copy[(area_summary_mth_copy.registry == x)&(area_summary_mth_copy.Room_En == y)]
+    agg_flat_sales_filter = area_summary_mth_copy[(area_summary_mth_copy.reg_type_id == x)&(area_summary_mth_copy.Room_En == y)]
     intermediate = agg_flat_sales_filter[agg_flat_sales_filter.fst_day == z]
     agg_relative_price = intermediate['relative_price'].sum()
     return agg_relative_price
 def period_count(x,y):
-    period_flat_sales_filter = period_area_summary_copy[(period_area_summary_copy.Room_En == x)&(period_area_summary_copy.registry == y)]
+    period_flat_sales_filter = period_area_summary_copy[(period_area_summary_copy.Room_En == x)&(period_area_summary_copy.reg_type_id == y)]
     return period_flat_sales_filter['txs_count'].sum()
 def period_villa_count(x,y):
-    period_villa_sales_filter = period_villa_area_summary_copy[(period_villa_area_summary_copy.size_range == x)&(period_villa_area_summary_copy.registry == y)]
+    period_villa_sales_filter = period_villa_area_summary_copy[(period_villa_area_summary_copy.size_range == x)&(period_villa_area_summary_copy.reg_type_id == y)]
     return period_villa_sales_filter['txs_count'].sum()
 
 def tot_villa_count(x,y,z):
-    agg_villa_sales_filter = all_registry_size_qtr_median_prices[(all_registry_size_qtr_median_prices.registry == x)&(all_registry_size_qtr_median_prices.size_range == y)]
+    agg_villa_sales_filter = all_registry_size_qtr_median_prices[(all_registry_size_qtr_median_prices.reg_type_id == x)&(all_registry_size_qtr_median_prices.size_range == y)]
     intermediate = agg_villa_sales_filter[agg_villa_sales_filter.fst_qtr==z]
     total_count = intermediate['qtr_txs'].sum()
     return total_count
 def agg_villa_area_prices(x,y,z):
-    agg_villa_sales_filter = area_villa_summary_copy[(area_villa_summary_copy.registry == x)&(area_villa_summary_copy.size_range == y)]
+    agg_villa_sales_filter = area_villa_summary_copy[(area_villa_summary_copy.reg_type_id == x)&(area_villa_summary_copy.size_range == y)]
     intermediate = agg_villa_sales_filter[agg_villa_sales_filter.fst_qtr == z]
     agg_villa_relative_price = intermediate['relative_price'].sum()
     return agg_villa_relative_price
@@ -197,6 +198,47 @@ land_sales = lands.copy(deep = True)
 land_sales['land_usage'] = land_sales['property_usage_en'].apply(lambda x: land_class(x))
 building = load_buildings()
 Rooms = load_rooms()
+@st.cache()
+def agg_qtr_metrics():
+    start_day = pd.to_datetime('2010-01-01')
+    flat_start_day = start_day
+    end_day = flat_sales['txs_date'].max()
+    end_date = flat_sales['txs_date'].max()
+    start_date = end_date - datetime.timedelta(days=90)
+    flat_sales_select = flat_sales[(flat_sales['txs_date']<=end_day)&(flat_sales['txs_date']>=start_day)&(flat_sales['Rooms']>=2)&(flat_sales['Rooms']<=4)]
+    #all_registry_rooms_area_qtr_median_prices = 
+    return pd.DataFrame(flat_sales_select.groupby(['reg_type_id','Room_En','area_name_en','fst_qtr']).agg(qtr_median_meter_price = ('meter_sale_price','median'),qtr_median_price = ('actual_worth','median'), txs_count = ('transaction_id','count'))).reset_index()
+@st.cache()
+def agg_mth_metrics():
+    start_day = pd.to_datetime('2010-01-01')
+    flat_start_day = start_day
+    end_day = flat_sales['txs_date'].max()
+    end_date = flat_sales['txs_date'].max()
+    start_date = end_date - datetime.timedelta(days=90)
+    flat_sales_select = flat_sales[(flat_sales['txs_date']<=end_day)&(flat_sales['txs_date']>=start_day)&(flat_sales['Rooms']>=2)&(flat_sales['Rooms']<=4)]
+    #all_registry_rooms_area_qtr_median_prices = 
+    return pd.DataFrame(flat_sales_select.groupby(['reg_type_id','Room_En','area_name_en','fst_day']).agg(mth_median_meter_price = ('meter_sale_price','median'),mth_median_price = ('actual_worth','median'), txs_mth_count = ('transaction_id','count'))).reset_index()
+
+all_registry_rooms_area_qtr_median_prices = agg_qtr_metrics()   
+@st.cache()
+def agg_qtr_sum():
+    return  pd.DataFrame(all_registry_rooms_area_qtr_median_prices.groupby(['reg_type_id','Room_En','fst_qtr']).agg(qtr_txs = ('txs_count','sum'))).reset_index()
+
+all_registry_rooms_qtr_median_prices = agg_qtr_sum()
+
+all_registry_rooms_area_mth_median_prices = agg_mth_metrics()
+
+@st.cache()
+def agg_villas_qtr_metrics():
+    start_day = pd.to_datetime('2010-01-01')
+    end_day = villa_sales['txs_date'].max()
+    end_date = villa_sales['txs_date'].max()
+    start_date = end_date - datetime.timedelta(days=90)
+    villa_sales_select = villa_sales[(villa_sales['txs_date']<=end_day)&(villa_sales['txs_date']>=start_day)]
+    return pd.DataFrame(villa_sales_select.groupby(['reg_type_id','size_range','area_name_en','fst_qtr']).agg(qtr_median_meter_price = ('meter_sale_price','median'),qtr_median_price = ('actual_worth','median'), txs_count = ('transaction_id','count'))).reset_index()
+    
+all_registry_size_area_qtr_median_prices = agg_villas_qtr_metrics()
+
 st.sidebar.title("Dubai Real Estates Market Dashboards")
 #st.sidebar.markdown('###')
 st.sidebar.markdown("**Settings**")
@@ -289,7 +331,7 @@ if option == 'Area Specific Flats Prices Analysis':
     kpi4.metric("**Last 90 Days 1 B/R median Price**",f"{this_period_1bed_median_price:,}","{0:.0%}".format(this_period_1bed_price_pct_chg))
     kpi5.metric("**Last 90 Days 2 B/R median Price**",f"{this_period_2bed_median_price:,}","{0:.0%}".format(this_period_2bed_price_pct_chg))
     kpi6.metric("**Last 90 Days 3 B/R median Price**",f"{this_period_3bed_median_price:,}","{0:.0%}".format(this_period_3bed_price_pct_chg))
-    st.subheader("Last 90 Days txs Scatter Plot (Price vs Size vs Building Age)")
+    st.subheader("Last 90 Days txs Plotting Charts (Price vs Size vs Building Age)")
     room_selection = st.radio("**Select Flat Rooms:**", options = ['All','1 B/R','2 B/R','3 B/R'],horizontal = True)
     if room_selection != "All":
         flat_sales_selected_period = flat_sales_selected_period[flat_sales_selected_period.Room_En == room_selection]
@@ -299,19 +341,41 @@ if option == 'Area Specific Flats Prices Analysis':
     #st.dataframe(area_buildings)
     merged_flat_building = pd.merge(flat_sales_selected_period,area_buildings,left_on="building_name_en",right_on="building_name_en",how = "left")
     #st.dataframe(merged_flat_building)
+    txs_age_count = pd.DataFrame(merged_flat_building.groupby(['building_age']).agg(age_txs_count = ('transaction_id','count'),flat_median_size = ('procedure_area','median'), flat_median_price = ('actual_worth','median'), flat_median_meter_price = ('meter_sale_price_x','median'))).reset_index()
+    #st.dataframe(txs_age_count)
     base = alt.Chart(flat_sales_selected_period).properties(height=300)
     point = base.mark_circle(size=20).encode(x=alt.X('actual_worth' + ':Q', title="price"), y=alt.Y('procedure_area' + ':Q', title="size"),color=alt.Color('Room_En', title='Rooms',legend=alt.Legend(orient='bottom-right')))
     #st.altair_chart(point, use_container_width=True)
     base1 = alt.Chart(merged_flat_building).properties(height = 300)
     point1 = base1.mark_circle(size=20).encode(x=alt.X('actual_worth' + ':Q', title="price"), y=alt.Y('building_age' + ':Q', title="Bldg Age"),color=alt.Color('Room_En', title='Rooms',legend=alt.Legend(orient='bottom-right')))
     #st.altair_chart(point1, use_container_width=True)
-    tab1, tab2 = st.tabs(["**Price vs Size**", "**Price vs Building Age**"])
+    base2 = alt.Chart(merged_flat_building).properties(height = 300)
+    point2 = base2.mark_circle(size=20).encode(x=alt.X('procedure_area' + ':Q', title="size"), y=alt.Y('building_age' + ':Q', title="Bldg Age"),color=alt.Color('Room_En', title='Rooms',legend=alt.Legend(orient='bottom-right')))
+    #txs_aging_count = merged_flat_building.transaction_id.count()
+    #st.write(txs_aging_count)
+    base3 = alt.Chart(txs_age_count).properties(height = 300)
+    point3 = base3.mark_bar().encode(x=alt.X('building_age' + ':Q', title="Age"), y=alt.Y('age_txs_count' + ':Q', title="Txs Count"))
+    base4 = alt.Chart(txs_age_count).properties(height = 300)
+    point4 = base4.mark_bar().encode(x=alt.X('building_age' + ':Q', title="Age"), y=alt.Y('flat_median_meter_price' + ':Q', title="Median Meter Price"))
+    base5 = alt.Chart(txs_age_count).properties(height = 300)
+    point5 = base5.mark_bar().encode(x=alt.X('building_age' + ':Q', title="Age"), y=alt.Y('flat_median_price' + ':Q', title="Median Price"))
+    base6 = alt.Chart(txs_age_count).properties(height = 300)
+    point6 = base6.mark_bar().encode(x=alt.X('building_age' + ':Q', title="Age"), y=alt.Y('flat_median_size' + ':Q', title="Median Size"))
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(["**Price vs Size**", "**Price vs Building Age**","**Size vs Age**","**Age/Txs Count**","**Age/Meter Price**","**Age/Price**","**Age/Median Size**"])
     with tab1:
         st.altair_chart(point,use_container_width=True)
     with tab2:
         st.altair_chart(point1,use_container_width=True)
-    
-    
+    with tab3:
+        st.altair_chart(point2,use_container_width=True)
+    with tab4:
+        st.altair_chart(point3,use_container_width=True)
+    with tab5:
+        st.altair_chart(point4,use_container_width=True)
+    with tab6:
+        st.altair_chart(point5,use_container_width=True)
+    with tab7:
+        st.altair_chart(point6,use_container_width=True)
     st.markdown("##")
     st.subheader("Historical Trend of Flats' Prices and transactions count (Quarterly and 9 months moving average trend)")
     room_radio_selection = st.radio("**Select Flat Rooms:**", options = ['1 B/R','2 B/R','3 B/R'],horizontal = True)
@@ -480,7 +544,7 @@ if  option == 'Comparative Areas Performance (villas)':
     select_size_range = st.sidebar.selectbox('**Select Villa Size Range**', ('All Sizes','less than 300','btw 300 to 600','more than 600 SQM'))
     end_date = villa_sales['txs_date'].max()
     start_date = end_date - datetime.timedelta(days=90)
-    villa_sales['size_range'] = villa_sales['procedure_area'].apply(lambda x: size_range(x))
+    #villa_sales['size_range'] = villa_sales['procedure_area'].apply(lambda x: size_range(x))
     if select_size_range == "All Sizes":
         villa_sales_selected_period = villa_sales[(villa_sales['reg_type_id']==registry_code)&(villa_sales['txs_date']<=end_date)&(villa_sales['txs_date']>=start_date)]
     else:
@@ -876,9 +940,10 @@ if  option == 'Market Historical Trend':
     end_date = flat_sales['txs_date'].max()
     start_date = end_date - datetime.timedelta(days=90)
     flat_sales_select = flat_sales[(flat_sales['txs_date']<=end_day)&(flat_sales['txs_date']>=start_day)&(flat_sales['Rooms']>=2)&(flat_sales['Rooms']<=4)&(flat_sales['reg_type_id'] == registry_code)]
-    all_registry_rooms_area_qtr_median_prices = pd.DataFrame(flat_sales_select.groupby(['registry','Room_En','area_name_en','fst_qtr']).agg(qtr_median_meter_price = ('meter_sale_price','median'),qtr_median_price = ('actual_worth','median'), txs_count = ('transaction_id','count'))).reset_index()
+    #all_registry_rooms_area_qtr_median_prices = pd.DataFrame(flat_sales_select.groupby(['registry','Room_En','area_name_en','fst_qtr']).agg(qtr_median_meter_price = ('meter_sale_price','median'),qtr_median_price = ('actual_worth','median'), txs_count = ('transaction_id','count'))).reset_index()
     #st.dataframe(all_registry_rooms_area_qtr_median_prices)
-    all_registry_rooms_qtr_median_prices = pd.DataFrame(all_registry_rooms_area_qtr_median_prices.groupby(['registry','Room_En','fst_qtr']).agg(qtr_txs = ('txs_count','sum'))).reset_index()
+    all_registry_rooms_area_qtr_median_prices = all_registry_rooms_area_qtr_median_prices[all_registry_rooms_area_qtr_median_prices.reg_type_id == registry_code]
+    all_registry_rooms_qtr_median_prices = all_registry_rooms_qtr_median_prices[all_registry_rooms_qtr_median_prices.reg_type_id == registry_code]
     #st.dataframe(all_registry_rooms_qtr_median_prices)
     #test = tot_count("OffPlan","1 B/R","2011-04-01")
     #st.write(test)
@@ -886,16 +951,17 @@ if  option == 'Market Historical Trend':
     #st.dataframe(all_registry_rooms_area_qtr_median_prices)
     area_summary_copy = all_registry_rooms_area_qtr_median_prices.copy(deep = True)
     #st.dataframe(area_summary_copy)
-    area_summary_copy['relative_weight'] = area_summary_copy.apply(lambda x:x['txs_count']/tot_count(x['registry'],x['Room_En'],x['fst_qtr']),axis = 1)
+    area_summary_copy['relative_weight'] = area_summary_copy.apply(lambda x:x['txs_count']/tot_count(x['reg_type_id'],x['Room_En'],x['fst_qtr']),axis = 1)
     area_summary_copy['relative_price'] = area_summary_copy.apply(lambda x:(x['relative_weight'])*(x['qtr_median_price']),axis = 1)
     #st.dataframe(area_summary_copy)
-    all_registry_rooms_qtr_median_prices['composite_median_price'] = all_registry_rooms_qtr_median_prices.apply(lambda x:agg_area_prices(x['registry'],x['Room_En'],x['fst_qtr']),axis=1)
+    all_registry_rooms_qtr_median_prices['composite_median_price'] = all_registry_rooms_qtr_median_prices.apply(lambda x:agg_area_prices(x['reg_type_id'],x['Room_En'],x['fst_qtr']),axis=1)
     #st.dataframe(all_registry_rooms_qtr_median_prices)
     #st.markdown("##")
     #st.subheader("Historical Graphs on Flats Prices and Activities Quarterly Trend (median flat price, median meter price & txs count)")
-    all_registry_rooms_area_mth_median_prices = pd.DataFrame(flat_sales_select.groupby(['registry','Room_En','area_name_en','fst_day']).agg(mth_median_meter_price = ('meter_sale_price','median'),mth_median_price = ('actual_worth','median'), txs_mth_count = ('transaction_id','count'))).reset_index()
+    #all_registry_rooms_area_mth_median_prices = pd.DataFrame(flat_sales_select.groupby(['registry','Room_En','area_name_en','fst_day']).agg(mth_median_meter_price = ('meter_sale_price','median'),mth_median_price = ('actual_worth','median'), txs_mth_count = ('transaction_id','count'))).reset_index()
     #st.dataframe(all_registry_rooms_area_qtr_median_prices)
-    all_registry_rooms_mth_median_prices = pd.DataFrame(all_registry_rooms_area_mth_median_prices.groupby(['registry','Room_En','fst_day']).agg(mth_txs = ('txs_mth_count','sum'))).reset_index()
+    all_registry_rooms_area_mth_median_prices = all_registry_rooms_area_mth_median_prices[all_registry_rooms_area_mth_median_prices.reg_type_id == registry_code]
+    all_registry_rooms_mth_median_prices = pd.DataFrame(all_registry_rooms_area_mth_median_prices.groupby(['reg_type_id','Room_En','fst_day']).agg(mth_txs = ('txs_mth_count','sum'))).reset_index()
     #st.dataframe(all_registry_rooms_qtr_median_prices)
     #test = tot_count("OffPlan","1 B/R","2011-04-01")
     #st.write(test)
@@ -903,17 +969,17 @@ if  option == 'Market Historical Trend':
     #st.dataframe(all_registry_rooms_area_qtr_median_prices)
     area_summary_mth_copy = all_registry_rooms_area_mth_median_prices.copy(deep = True)
     #st.dataframe(area_summary_copy)
-    area_summary_mth_copy['relative_weight'] = area_summary_mth_copy.apply(lambda x:x['txs_mth_count']/tot_mth_count(x['registry'],x['Room_En'],x['fst_day']),axis = 1)
+    area_summary_mth_copy['relative_weight'] = area_summary_mth_copy.apply(lambda x:x['txs_mth_count']/tot_mth_count(x['reg_type_id'],x['Room_En'],x['fst_day']),axis = 1)
     area_summary_mth_copy['relative_price'] = area_summary_mth_copy.apply(lambda x:(x['relative_weight'])*(x['mth_median_price']),axis = 1)
     #st.dataframe(area_summary_copy)
-    all_registry_rooms_mth_median_prices['composite_median_price'] = all_registry_rooms_mth_median_prices.apply(lambda x:agg_area_mth_prices(x['registry'],x['Room_En'],x['fst_day']),axis=1)
+    all_registry_rooms_mth_median_prices['composite_median_price'] = all_registry_rooms_mth_median_prices.apply(lambda x:agg_area_mth_prices(x['reg_type_id'],x['Room_En'],x['fst_day']),axis=1)
     all_registry_rooms_mth_median_prices['rolling_mean'] = all_registry_rooms_mth_median_prices.set_index('fst_day').groupby('Room_En', sort=False)['composite_median_price'].rolling(9).mean().round(0).to_numpy()
     flat_sales_select_period = flat_sales_select[flat_sales_select['txs_date']>=start_date]
     period_flat_count = flat_sales_select_period['transaction_id'].count()
-    period_registry_rooms_area_median_prices = pd.DataFrame(flat_sales_select_period.groupby(['registry','Room_En','area_name_en']).agg(period_median_meter_price = ('meter_sale_price','median'),period_median_price = ('actual_worth','median'), txs_count = ('transaction_id','count'))).reset_index()
-    period_registry_rooms_median_prices = pd.DataFrame(period_registry_rooms_area_median_prices.groupby(['registry','Room_En']).agg(period_txs = ('txs_count','sum'))).reset_index()
+    period_registry_rooms_area_median_prices = pd.DataFrame(flat_sales_select_period.groupby(['reg_type_id','Room_En','area_name_en']).agg(period_median_meter_price = ('meter_sale_price','median'),period_median_price = ('actual_worth','median'), txs_count = ('transaction_id','count'))).reset_index()
+    period_registry_rooms_median_prices = pd.DataFrame(period_registry_rooms_area_median_prices.groupby(['reg_type_id','Room_En']).agg(period_txs = ('txs_count','sum'))).reset_index()
     period_area_summary_copy = period_registry_rooms_area_median_prices.copy(deep = True)
-    period_area_summary_copy['relative_weight'] = period_area_summary_copy.apply(lambda x:x['txs_count']/period_count(x['Room_En'],x['registry']),axis = 1)
+    period_area_summary_copy['relative_weight'] = period_area_summary_copy.apply(lambda x:x['txs_count']/period_count(x['Room_En'],x['reg_type_id']),axis = 1)
     period_area_summary_copy['relative_price'] = period_area_summary_copy.apply(lambda x:(x['relative_weight'])*(x['period_median_price']),axis = 1)
     #period_registry_rooms_median_prices['period_composite_median_price'] = period_registry_rooms_median_prices.apply(lambda x:agg_area_prices(x['registry'],x['Room_En'],x['fst_qtr']),axis=1)
     period_1BD = period_area_summary_copy[(period_area_summary_copy.Room_En == "1 B/R")]
@@ -954,50 +1020,50 @@ if  option == 'Market Historical Trend':
     
     st.markdown('###')
     st.subheader("Villas Composite Prices Trend")
-    villa_sales['size_range'] = villa_sales['procedure_area'].apply(lambda x: size_range(x))
+    #villa_sales['size_range'] = villa_sales['procedure_area'].apply(lambda x: size_range(x))
     start_day = pd.to_datetime('2010-01-01')
     end_day = villa_sales['txs_date'].max()
     end_date = villa_sales['txs_date'].max()
     start_date = end_date - datetime.timedelta(days=90)
     villa_sales_select = villa_sales[(villa_sales['txs_date']<=end_day)&(villa_sales['txs_date']>=start_day)&(villa_sales['reg_type_id'] == registry_code)]
-    all_registry_size_area_qtr_median_prices = pd.DataFrame(villa_sales_select.groupby(['registry','size_range','area_name_en','fst_qtr']).agg(qtr_median_meter_price = ('meter_sale_price','median'),qtr_median_price = ('actual_worth','median'), txs_count = ('transaction_id','count'))).reset_index()
+    all_registry_size_area_qtr_median_prices = all_registry_size_area_qtr_median_prices[all_registry_size_area_qtr_median_prices.reg_type_id == registry_code]
     #st.dataframe(all_registry_size_area_qtr_median_prices)
-    all_registry_size_qtr_median_prices = pd.DataFrame(all_registry_size_area_qtr_median_prices.groupby(['registry','size_range','fst_qtr']).agg(qtr_txs = ('txs_count','sum'))).reset_index()
+    all_registry_size_qtr_median_prices = pd.DataFrame(all_registry_size_area_qtr_median_prices.groupby(['reg_type_id','size_range','fst_qtr']).agg(qtr_txs = ('txs_count','sum'))).reset_index()
     #st.dataframe(all_registry_size_qtr_median_prices)
     #test = tot_count("OffPlan","1 B/R","2011-04-01")
     #st.write(test)
     #all_registry_rooms_area_qtr_median_prices['relative_weight'] = all_registry_rooms_area_qtr_median_prices.apply(lambda x:x['txs_count']/tot_count(x['registry'],x['Room_En'],x['fst_qtr']),axis = 1)
     #st.dataframe(all_registry_rooms_area_qtr_median_prices)
     area_villa_summary_copy = all_registry_size_area_qtr_median_prices.copy(deep = True)
-    area_villa_summary_copy['relative_weight'] = area_villa_summary_copy.apply(lambda x:x['txs_count']/tot_villa_count(x['registry'],x['size_range'],x['fst_qtr']),axis = 1)
+    area_villa_summary_copy['relative_weight'] = area_villa_summary_copy.apply(lambda x:x['txs_count']/tot_villa_count(x['reg_type_id'],x['size_range'],x['fst_qtr']),axis = 1)
     #st.dataframe(area_villa_summary_copy)
     area_villa_summary_copy['relative_price'] = area_villa_summary_copy.apply(lambda x:(x['relative_weight'])*(x['qtr_median_price']),axis = 1)
     #st.dataframe(area_summary_copy)
-    all_registry_size_qtr_median_prices['composite_villa_median_price'] = all_registry_size_qtr_median_prices.apply(lambda x:agg_villa_area_prices(x['registry'],x['size_range'],x['fst_qtr']),axis=1)
+    all_registry_size_qtr_median_prices['composite_villa_median_price'] = all_registry_size_qtr_median_prices.apply(lambda x:agg_villa_area_prices(x['reg_type_id'],x['size_range'],x['fst_qtr']),axis=1)
     #st.dataframe(all_registry_size_qtr_median_prices)
     #st.markdown("##")
     #st.subheader("Historical Graphs on Flats Prices and Activities Quarterly Trend (median flat price, median meter price & txs count)")
     villa_sales_select_period = villa_sales_select[villa_sales_select['txs_date']>=start_date]
     #period_villa_count = villa_sales_select_period['transaction_id'].count()
-    period_registry_size_area_median_prices = pd.DataFrame(villa_sales_select_period.groupby(['registry','size_range','area_name_en']).agg(period_median_meter_price = ('meter_sale_price','median'),period_median_price = ('actual_worth','median'), txs_count = ('transaction_id','count'))).reset_index()
-    period_registry_size_median_prices = pd.DataFrame(period_registry_size_area_median_prices.groupby(['registry','size_range']).agg(period_txs = ('txs_count','sum'))).reset_index()
+    period_registry_size_area_median_prices = pd.DataFrame(villa_sales_select_period.groupby(['reg_type_id','size_range','area_name_en']).agg(period_median_meter_price = ('meter_sale_price','median'),period_median_price = ('actual_worth','median'), txs_count = ('transaction_id','count'))).reset_index()
+    period_registry_size_median_prices = pd.DataFrame(period_registry_size_area_median_prices.groupby(['reg_type_id','size_range']).agg(period_txs = ('txs_count','sum'))).reset_index()
     period_villa_area_summary_copy = period_registry_size_area_median_prices.copy(deep = True)
-    period_villa_area_summary_copy['relative_weight'] = period_villa_area_summary_copy.apply(lambda x:x['txs_count']/period_villa_count(x['size_range'],x['registry']),axis = 1)
+    period_villa_area_summary_copy['relative_weight'] = period_villa_area_summary_copy.apply(lambda x:x['txs_count']/period_villa_count(x['size_range'],x['reg_type_id']),axis = 1)
     period_villa_area_summary_copy['relative_price'] = period_villa_area_summary_copy.apply(lambda x:(x['relative_weight'])*(x['period_median_price']),axis = 1)
     #period_registry_rooms_median_prices['period_composite_median_price'] = period_registry_rooms_median_prices.apply(lambda x:agg_area_prices(x['registry'],x['Room_En'],x['fst_qtr']),axis=1)
-    period_small = period_villa_area_summary_copy[(period_villa_area_summary_copy.size_range == "less than 300")]
+    period_small = period_villa_area_summary_copy[(period_villa_area_summary_copy.size_range == "less than 250")]
     period_small_composite = int(period_small['relative_price'].sum())
-    initial_small = all_registry_size_qtr_median_prices[(all_registry_size_qtr_median_prices.size_range == "less than 300")&(all_registry_size_qtr_median_prices.fst_qtr == '2010-01-01')]
+    initial_small = all_registry_size_qtr_median_prices[(all_registry_size_qtr_median_prices.size_range == "less than 250")&(all_registry_size_qtr_median_prices.fst_qtr == '2010-01-01')]
     initial_small_composite = initial_small['composite_villa_median_price'].sum()
     period_small_composite_prct_chg = (period_small_composite - initial_small_composite) / initial_small_composite
-    period_medium = period_villa_area_summary_copy[(period_villa_area_summary_copy.size_range == "btw 300 to 600")]
+    period_medium = period_villa_area_summary_copy[(period_villa_area_summary_copy.size_range == "btw 250 to 500")]
     period_medium_composite = int(period_medium['relative_price'].sum())
-    initial_medium = all_registry_size_qtr_median_prices[(all_registry_size_qtr_median_prices.size_range == "btw 300 to 600")&(all_registry_size_qtr_median_prices.fst_qtr == '2010-01-01')]
+    initial_medium = all_registry_size_qtr_median_prices[(all_registry_size_qtr_median_prices.size_range == "btw 250 to 500")&(all_registry_size_qtr_median_prices.fst_qtr == '2010-01-01')]
     initial_medium_composite = initial_medium['composite_villa_median_price'].sum()
     period_medium_composite_prct_chg = (period_medium_composite - initial_medium_composite) / initial_medium_composite
-    period_large = period_villa_area_summary_copy[(period_villa_area_summary_copy.size_range == "more than 600 SQM")]
+    period_large = period_villa_area_summary_copy[(period_villa_area_summary_copy.size_range == "more than 500 SQM")]
     period_large_composite = int(period_large['relative_price'].sum())
-    initial_large = all_registry_size_qtr_median_prices[(all_registry_size_qtr_median_prices.size_range == "more than 600 SQM")&(all_registry_size_qtr_median_prices.fst_qtr == '2010-01-01')]
+    initial_large = all_registry_size_qtr_median_prices[(all_registry_size_qtr_median_prices.size_range == "more than 500 SQM")&(all_registry_size_qtr_median_prices.fst_qtr == '2010-01-01')]
     initial_large_composite = initial_large['composite_villa_median_price'].sum()
     period_large_composite_prct_chg = (period_large_composite - initial_large_composite) / initial_large_composite
     
