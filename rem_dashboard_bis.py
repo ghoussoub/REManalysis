@@ -32,39 +32,23 @@ st.set_page_config(layout="wide")
 @st.cache()
 def load_flats():
     df = pd.read_csv(r'flats.csv',encoding=('utf_8'))
-    df['year'] = pd.DatetimeIndex(df['instance_date']).year
-    df['month'] = pd.DatetimeIndex(df['instance_date']).month
-    df['txs_date'] = pd.to_datetime(df['instance_date'],format='%d-%m-%Y')
-    df['fst_day'] = df['txs_date'].apply(lambda x : x.replace(day=1))
-    df['fst_qtr'] = df['instance_date'].apply(quarter_month)
-    #df['fst_day'] = pd.to_datetime(df['fst_day']).dt.date
-    df['fst_day'] = pd.to_datetime(df['fst_day'],format='%d-%m-%Y')
-    df['fst_qtr'] = pd.to_datetime(df['fst_qtr'],format='%d-%m-%Y')
+    df['txs_date'] = pd.to_datetime(df['txs_date'])
+    df['fst_day'] = pd.to_datetime(df['fst_day'])
+    df['fst_qtr'] = pd.to_datetime(df['fst_qtr'])
     return(df)
 @st.cache()
 def load_villas():
     df = pd.read_csv(r'villas.csv',encoding=('utf_8'))
-    df['year'] = pd.DatetimeIndex(df['instance_date']).year
-    df['month'] = pd.DatetimeIndex(df['instance_date']).month
-    df['txs_date'] = pd.to_datetime(df['instance_date'],format='%d-%m-%Y')
-    df['fst_day'] = df['txs_date'].apply(lambda x : x.replace(day=1))
-    df['fst_qtr'] = df['instance_date'].apply(quarter_month)
-    #df['fst_day'] = pd.to_datetime(df['fst_day']).dt.date
-    df['fst_day'] = pd.to_datetime(df['fst_day'],format='%d-%m-%Y')
-    df['fst_qtr'] = pd.to_datetime(df['fst_qtr'],format='%d-%m-%Y')
-    df['size_range'] = df['procedure_area'].apply(lambda x: size_range(x))
+    df['txs_date'] = pd.to_datetime(df['txs_date'])
+    df['fst_day'] = pd.to_datetime(df['fst_day'])
+    df['fst_qtr'] = pd.to_datetime(df['fst_qtr'])
     return(df)
 @st.cache()
 def load_lands():
     df = pd.read_csv(r'lands.csv',encoding=('utf_8'))
-    df['year'] = pd.DatetimeIndex(df['instance_date']).year
-    df['month'] = pd.DatetimeIndex(df['instance_date']).month
-    df['txs_date'] = pd.to_datetime(df['instance_date'],format='%d-%m-%Y')
-    df['fst_day'] = df['txs_date'].apply(lambda x : x.replace(day=1))
-    df['fst_qtr'] = df['instance_date'].apply(quarter_month)
-    #df['fst_day'] = pd.to_datetime(df['fst_day']).dt.date
-    df['fst_day'] = pd.to_datetime(df['fst_day'],format='%d-%m-%Y')
-    df['fst_qtr'] = pd.to_datetime(df['fst_qtr'],format='%d-%m-%Y')
+    df['txs_date'] = pd.to_datetime(df['txs_date'])
+    df['fst_day'] = pd.to_datetime(df['fst_day'])
+    df['fst_qtr'] = pd.to_datetime(df['fst_qtr'])
     return(df) 
 @st.cache()
 def load_areas():
@@ -81,6 +65,22 @@ def load_model():
     regr = pickle.load(file)
     file.close()
     return regr
+@st.cache()
+def load_flats_sum():
+    df = pd.read_csv(r'flats_summary.csv',encoding=('utf_8'))
+    return(df)
+@st.cache()
+def load_flats_mth_sum():
+    df = pd.read_csv(r'flats_mth_summary.csv',encoding=('utf_8'))
+    return(df)
+@st.cache()
+def load_villas_sum():
+    df = pd.read_csv(r'villas_summary.csv',encoding=('utf_8'))
+    return(df)
+@st.cache()
+def load_lands_sum():
+    df = pd.read_csv(r'lands_summary.csv',encoding=('utf_8'))
+    return(df)
 def perf_class(x):
     if x >= 20:
          perf = "more than 20%"
@@ -187,57 +187,84 @@ df2 = load_lands()
 area = list(df['area_name_en'].unique())
 #area.sort_values(by=['area_name_en'], inplace=True)
 #area.sort_values('area_name_en',axis=0,ascending=False).reset_index(drop=True)
-flats = df
-flat_sales = flats.copy(deep = True)
-flat_sales['registry'] = flat_sales['reg_type_id'].apply(lambda x: "Ready" if x == 1 else "OffPlan")
+#flats = df
+flat_sales = df.copy(deep = True)
+#flat_sales['txs_date'] = pd.to_datetime(flat_sales['txs_date'])
+#flat_sales['registry'] = flat_sales['reg_type_id'].apply(lambda x: "Ready" if x == 1 else "OffPlan")
 villas = df1[df1.procedure_area <= 1000]
 villa_sales = villas.copy(deep = True)
-villa_sales['registry'] = villa_sales['reg_type_id'].apply(lambda x: "Ready" if x == 1 else "OffPlan")
+#villa_sales['txs_date'] = pd.to_datetime(villa_sales['txs_date'])
+#villa_sales['registry'] = villa_sales['reg_type_id'].apply(lambda x: "Ready" if x == 1 else "OffPlan")
 lands = df2[df2.procedure_area <= 10000]
 land_sales = lands.copy(deep = True)
-land_sales['land_usage'] = land_sales['property_usage_en'].apply(lambda x: land_class(x))
+#land_sales['txs_date'] = pd.to_datetime(land_sales['txs_date'])
+#land_sales['land_usage'] = land_sales['property_usage_en'].apply(lambda x: land_class(x))
 building = load_buildings()
 Rooms = load_rooms()
-@st.cache()
-def agg_qtr_metrics():
-    start_day = pd.to_datetime('2010-01-01')
-    flat_start_day = start_day
-    end_day = flat_sales['txs_date'].max()
-    end_date = flat_sales['txs_date'].max()
-    start_date = end_date - datetime.timedelta(days=90)
-    flat_sales_select = flat_sales[(flat_sales['txs_date']<=end_day)&(flat_sales['txs_date']>=start_day)&(flat_sales['Rooms']>=2)&(flat_sales['Rooms']<=4)]
-    #all_registry_rooms_area_qtr_median_prices = 
-    return pd.DataFrame(flat_sales_select.groupby(['reg_type_id','Room_En','area_name_en','fst_qtr']).agg(qtr_median_meter_price = ('meter_sale_price','median'),qtr_median_price = ('actual_worth','median'), txs_count = ('transaction_id','count'))).reset_index()
-@st.cache()
-def agg_mth_metrics():
-    start_day = pd.to_datetime('2010-01-01')
-    flat_start_day = start_day
-    end_day = flat_sales['txs_date'].max()
-    end_date = flat_sales['txs_date'].max()
-    start_date = end_date - datetime.timedelta(days=90)
-    flat_sales_select = flat_sales[(flat_sales['txs_date']<=end_day)&(flat_sales['txs_date']>=start_day)&(flat_sales['Rooms']>=2)&(flat_sales['Rooms']<=4)]
-    #all_registry_rooms_area_qtr_median_prices = 
-    return pd.DataFrame(flat_sales_select.groupby(['reg_type_id','Room_En','area_name_en','fst_day']).agg(mth_median_meter_price = ('meter_sale_price','median'),mth_median_price = ('actual_worth','median'), txs_mth_count = ('transaction_id','count'))).reset_index()
+all_registry_rooms_area_qtr_median_prices = load_flats_sum()
+all_registry_rooms_area_mth_median_prices = load_flats_mth_sum()
+all_registry_size_area_qtr_median_prices = load_villas_sum()
+all_usage_area_qtr_median_meter_prices = load_lands_sum()
 
-all_registry_rooms_area_qtr_median_prices = agg_qtr_metrics()   
+#@st.cache()
+#def agg_qtr_metrics():
+    #start_day = pd.to_datetime('2010-01-01')
+    #flat_start_day = start_day
+    #end_day = flat_sales['txs_date'].max()
+    #end_date = flat_sales['txs_date'].max()
+    #start_date = end_date - datetime.timedelta(days=90)
+    #flat_sales_select = flat_sales[(flat_sales['txs_date']<=end_day)&(flat_sales['txs_date']>=start_day)&(flat_sales['Rooms']>=2)&(flat_sales['Rooms']<=4)]
+    #all_registry_rooms_area_qtr_median_prices = 
+    #return pd.DataFrame(flat_sales_select.groupby(['reg_type_id','Room_En','area_name_en','fst_qtr']).agg(qtr_median_meter_price = ('meter_sale_price','median'),qtr_median_price = ('actual_worth','median'), txs_count = ('transaction_id','count'))).reset_index()
+#@st.cache()
+#def agg_mth_metrics():
+    #start_day = pd.to_datetime('2010-01-01')
+    #flat_start_day = start_day
+    #end_day = flat_sales['txs_date'].max()
+    #end_date = flat_sales['txs_date'].max()
+    #start_date = end_date - datetime.timedelta(days=90)
+    #flat_sales_select = flat_sales[(flat_sales['txs_date']<=end_day)&(flat_sales['txs_date']>=start_day)&(flat_sales['Rooms']>=2)&(flat_sales['Rooms']<=4)]
+    #all_registry_rooms_area_qtr_median_prices = 
+    #return pd.DataFrame(flat_sales_select.groupby(['reg_type_id','Room_En','area_name_en','fst_day']).agg(mth_median_meter_price = ('meter_sale_price','median'),mth_median_price = ('actual_worth','median'), txs_mth_count = ('transaction_id','count'))).reset_index()
+
+#all_registry_rooms_area_qtr_median_prices = agg_qtr_metrics()   
 @st.cache()
 def agg_qtr_sum():
     return  pd.DataFrame(all_registry_rooms_area_qtr_median_prices.groupby(['reg_type_id','Room_En','fst_qtr']).agg(qtr_txs = ('txs_count','sum'))).reset_index()
 
+@st.cache()
+def agg_mth_sum():
+    return  pd.DataFrame(all_registry_rooms_area_mth_median_prices.groupby(['reg_type_id','Room_En','fst_day']).agg(mth_txs = ('txs_mth_count','sum'))).reset_index()
+
 all_registry_rooms_qtr_median_prices = agg_qtr_sum()
 
-all_registry_rooms_area_mth_median_prices = agg_mth_metrics()
+all_registry_rooms_mth_median_prices = agg_mth_sum()
 
-@st.cache()
-def agg_villas_qtr_metrics():
-    start_day = pd.to_datetime('2010-01-01')
-    end_day = villa_sales['txs_date'].max()
-    end_date = villa_sales['txs_date'].max()
-    start_date = end_date - datetime.timedelta(days=90)
-    villa_sales_select = villa_sales[(villa_sales['txs_date']<=end_day)&(villa_sales['txs_date']>=start_day)]
-    return pd.DataFrame(villa_sales_select.groupby(['reg_type_id','size_range','area_name_en','fst_qtr']).agg(qtr_median_meter_price = ('meter_sale_price','median'),qtr_median_price = ('actual_worth','median'), txs_count = ('transaction_id','count'))).reset_index()
+#@st.cache()
+#def agg_villas_qtr_metrics():
+    #start_day = pd.to_datetime('2010-01-01')
+    #end_day = villa_sales['txs_date'].max()
+    #end_date = villa_sales['txs_date'].max()
+    #start_date = end_date - datetime.timedelta(days=90)
+    #villa_sales_select = villa_sales[(villa_sales['txs_date']<=end_day)&(villa_sales['txs_date']>=start_day)]
+    #return pd.DataFrame(villa_sales_select.groupby(['reg_type_id','size_range','area_name_en','fst_qtr']).agg(qtr_median_meter_price = ('meter_sale_price','median'),qtr_median_price = ('actual_worth','median'), txs_count = ('transaction_id','count'))).reset_index()
     
-all_registry_size_area_qtr_median_prices = agg_villas_qtr_metrics()
+#all_registry_size_area_qtr_median_prices = agg_villas_qtr_metrics()
+
+#@st.cache()
+#def agg_lands_qtr_metrics():
+    #start_day = pd.to_datetime('2010-01-01')
+    #end_day = land_sales['txs_date'].max()
+    #end_date = land_sales['txs_date'].max()
+    #start_date = end_date - datetime.timedelta(days=90)
+    #land_sales_select = land_sales[(land_sales['txs_date']<=end_day)&(land_sales['txs_date']>=start_day)]
+    #land_sales_select = land_sales_select[land_sales_select['land_usage'].isin(['Commercial','Residential'])]
+    #return pd.DataFrame(land_sales_select.groupby(['land_usage','area_name_en','fst_qtr']).agg(qtr_median_meter_price = ('meter_sale_price','median'),qtr_median_price = ('actual_worth','median'), txs_count = ('transaction_id','count'))).reset_index()
+    
+#all_usage_area_qtr_median_meter_prices = agg_lands_qtr_metrics()
+#st.dataframe(all_usage_area_qtr_median_meter_prices)
+all_usage_qtr_median_meter_prices = pd.DataFrame(all_usage_area_qtr_median_meter_prices.groupby(['land_usage','fst_qtr']).agg(qtr_txs = ('txs_count','sum'))).reset_index()
+
 
 st.sidebar.title("Dubai Real Estates Market Dashboards")
 #st.sidebar.markdown('###')
@@ -939,7 +966,7 @@ if  option == 'Market Historical Trend':
     end_day = flat_sales['txs_date'].max()
     end_date = flat_sales['txs_date'].max()
     start_date = end_date - datetime.timedelta(days=90)
-    flat_sales_select = flat_sales[(flat_sales['txs_date']<=end_day)&(flat_sales['txs_date']>=start_day)&(flat_sales['Rooms']>=2)&(flat_sales['Rooms']<=4)&(flat_sales['reg_type_id'] == registry_code)]
+    #flat_sales_select = flat_sales[(flat_sales['txs_date']<=end_day)&(flat_sales['txs_date']>=start_day)&(flat_sales['Rooms']>=2)&(flat_sales['Rooms']<=4)&(flat_sales['reg_type_id'] == registry_code)]
     #all_registry_rooms_area_qtr_median_prices = pd.DataFrame(flat_sales_select.groupby(['registry','Room_En','area_name_en','fst_qtr']).agg(qtr_median_meter_price = ('meter_sale_price','median'),qtr_median_price = ('actual_worth','median'), txs_count = ('transaction_id','count'))).reset_index()
     #st.dataframe(all_registry_rooms_area_qtr_median_prices)
     all_registry_rooms_area_qtr_median_prices = all_registry_rooms_area_qtr_median_prices[all_registry_rooms_area_qtr_median_prices.reg_type_id == registry_code]
@@ -961,7 +988,7 @@ if  option == 'Market Historical Trend':
     #all_registry_rooms_area_mth_median_prices = pd.DataFrame(flat_sales_select.groupby(['registry','Room_En','area_name_en','fst_day']).agg(mth_median_meter_price = ('meter_sale_price','median'),mth_median_price = ('actual_worth','median'), txs_mth_count = ('transaction_id','count'))).reset_index()
     #st.dataframe(all_registry_rooms_area_qtr_median_prices)
     all_registry_rooms_area_mth_median_prices = all_registry_rooms_area_mth_median_prices[all_registry_rooms_area_mth_median_prices.reg_type_id == registry_code]
-    all_registry_rooms_mth_median_prices = pd.DataFrame(all_registry_rooms_area_mth_median_prices.groupby(['reg_type_id','Room_En','fst_day']).agg(mth_txs = ('txs_mth_count','sum'))).reset_index()
+    all_registry_rooms_mth_median_prices = all_registry_rooms_mth_median_prices[all_registry_rooms_mth_median_prices.reg_type_id == registry_code]
     #st.dataframe(all_registry_rooms_qtr_median_prices)
     #test = tot_count("OffPlan","1 B/R","2011-04-01")
     #st.write(test)
@@ -974,7 +1001,7 @@ if  option == 'Market Historical Trend':
     #st.dataframe(area_summary_copy)
     all_registry_rooms_mth_median_prices['composite_median_price'] = all_registry_rooms_mth_median_prices.apply(lambda x:agg_area_mth_prices(x['reg_type_id'],x['Room_En'],x['fst_day']),axis=1)
     all_registry_rooms_mth_median_prices['rolling_mean'] = all_registry_rooms_mth_median_prices.set_index('fst_day').groupby('Room_En', sort=False)['composite_median_price'].rolling(9).mean().round(0).to_numpy()
-    flat_sales_select_period = flat_sales_select[flat_sales_select['txs_date']>=start_date]
+    flat_sales_select_period = flat_sales[(flat_sales['txs_date']<=end_day)&(flat_sales['txs_date']>=start_date)&(flat_sales['Rooms']>=2)&(flat_sales['Rooms']<=4)&(flat_sales['reg_type_id'] == registry_code)]
     period_flat_count = flat_sales_select_period['transaction_id'].count()
     period_registry_rooms_area_median_prices = pd.DataFrame(flat_sales_select_period.groupby(['reg_type_id','Room_En','area_name_en']).agg(period_median_meter_price = ('meter_sale_price','median'),period_median_price = ('actual_worth','median'), txs_count = ('transaction_id','count'))).reset_index()
     period_registry_rooms_median_prices = pd.DataFrame(period_registry_rooms_area_median_prices.groupby(['reg_type_id','Room_En']).agg(period_txs = ('txs_count','sum'))).reset_index()
@@ -998,17 +1025,37 @@ if  option == 'Market Historical Trend':
     initial_3BD_composite = initial_3BD['composite_median_price'].sum()
     period_3BD_composite_prct_chg = (period_3BD_composite - initial_3BD_composite) / initial_3BD_composite
     base1 = alt.Chart(all_registry_rooms_qtr_median_prices).properties(height=400)
-    line1 = base1.mark_line(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('composite_median_price', title='Composite Median Price'),tooltip = ['fst_qtr','Room_En','composite_median_price','qtr_txs'],color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
+    line1 = base1.mark_line(size=2).encode(x=alt.X('fst_qtr:T', title='Date'),y=alt.Y('composite_median_price', title='Composite Median Price'),tooltip = ['fst_qtr:T','Room_En','composite_median_price','qtr_txs'],color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
     #st.altair_chart(line1,use_container_width=True)
     base11 = alt.Chart(all_registry_rooms_mth_median_prices).properties(height=400)
-    line11 = base11.mark_line(size=2).encode(x=alt.X('fst_day:T', title='Date'),y=alt.Y('rolling_mean:Q', title='Rolling Composite Median Price'),tooltip = ['fst_day','Room_En','rolling_mean','mth_txs'],color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
+    line11 = base11.mark_line(size=2).encode(x=alt.X('fst_day:T', title='Date'),y=alt.Y('rolling_mean:Q', title='Rolling Composite Median Price'),tooltip = ['fst_day:T','Room_En','rolling_mean','mth_txs'],color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
+    flat_qtr_txs = all_registry_rooms_qtr_median_prices[all_registry_rooms_qtr_median_prices.reg_type_id == registry_code]
+    flat_qtr_sum_txs = pd.DataFrame(flat_qtr_txs.groupby(['fst_qtr']).agg(tot_qtr_txs = ('qtr_txs','sum'))).reset_index()
+    base12 = alt.Chart(flat_qtr_sum_txs).properties(height=400)
+    point12 = base12.mark_bar().encode(x=alt.X('fst_qtr:T', title="Date"), y=alt.Y('tot_qtr_txs' + ':Q', title="Qtr Txs"))
+    base13 = alt.Chart(flat_qtr_sum_txs)
+    line13 = base13.mark_line(color='red').transform_window(rolling_mean = 'mean(tot_qtr_txs)',frame = [-3,0]).encode(x='fst_qtr:T',y='rolling_mean:Q')
+    line14 = (point12 + line13)
+    #line = alt.Chart(source).mark_line(color='red').transform_window(
+        # The field to average
+        #rolling_mean='mean(wheat)',
+        # The number of values before and after the current value to include.
+        #frame=[-9, 0]
+    #).encode(
+        #x='year:O',
+        #y='rolling_mean:Q'
+    #)
+    
+   #st.dataframe(all_registry_rooms_qtr_median_prices)
+    #st.dataframe(flat_qtr_sum_txs)
     #st.altair_chart(line11,use_container_width=True)
-    tab1, tab2 = st.tabs(["**Composite median prices (qtr)**", "**Rolling (9 months) Composite Prices**"])
+    tab1, tab2,tab3 = st.tabs(["**Composite median prices (qtr)**", "**Rolling (9 months) Composite Prices**","**Quarterly Txs**"])
     with tab1:
         st.altair_chart(line1,use_container_width=True)
     with tab2:
         st.altair_chart(line11,use_container_width=True)
-    
+    with tab3:
+        st.altair_chart(line14,use_container_width=True)
     st.markdown("**Flats Current Market performance is measured by the percent change of composite price for last 90 days compared to initial period (first quarter of 2010). Performance is shown by the three indicators below:**")
     kpi1,kpi2,kpi3 = st.columns(3)
     kpi1.metric("**Last 90 Days 1 B/R composite median Price**",f"{period_1BD_composite:,}","{0:.0%}".format(period_1BD_composite_prct_chg))
@@ -1067,9 +1114,23 @@ if  option == 'Market Historical Trend':
     initial_large_composite = initial_large['composite_villa_median_price'].sum()
     period_large_composite_prct_chg = (period_large_composite - initial_large_composite) / initial_large_composite
     
-    base2 = alt.Chart(all_registry_size_qtr_median_prices).properties(height=300)
-    line2 = base2.mark_line(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('composite_villa_median_price', title='Composite Median Price'), tooltip = ['fst_qtr','size_range','composite_villa_median_price','qtr_txs'],color=alt.Color('size_range', title='Size Range',legend=alt.Legend(orient='right')))
-    st.altair_chart(line2,use_container_width=True) 
+    villa_qtr_txs = all_registry_size_qtr_median_prices[all_registry_size_qtr_median_prices.reg_type_id == registry_code]
+    villa_qtr_sum_txs = pd.DataFrame(villa_qtr_txs.groupby(['fst_qtr']).agg(tot_qtr_txs = ('qtr_txs','sum'))).reset_index()
+    base2 = alt.Chart(all_registry_size_qtr_median_prices).properties(height=400)
+    line2 = base2.mark_line(size=2).encode(x=alt.X('fst_qtr:T', title='Date'),y=alt.Y('composite_villa_median_price', title='Composite Median Price'), tooltip = ['fst_qtr:T','size_range','composite_villa_median_price','qtr_txs'],color=alt.Color('size_range', title='Size Range',legend=alt.Legend(orient='right')))
+    #st.altair_chart(line2,use_container_width=True) 
+    base12 = alt.Chart(villa_qtr_sum_txs).properties(height=400)
+    point12 = base12.mark_bar().encode(x=alt.X('fst_qtr:T', title="Date"), y=alt.Y('tot_qtr_txs' + ':Q', title="Qtr Txs"))
+    base13 = alt.Chart(villa_qtr_sum_txs)
+    line13 = base13.mark_line(color='red').transform_window(rolling_mean = 'mean(tot_qtr_txs)',frame = [-3,0]).encode(x='fst_qtr:T',y='rolling_mean:Q')
+    line14 = (point12 + line13)
+    
+    tab1, tab2 = st.tabs(["**Composite median prices (qtr)**", "**Quarterly Txs**"])
+    with tab1:
+        st.altair_chart(line2,use_container_width=True)
+    with tab2:
+        st.altair_chart(line14,use_container_width=True)
+        
     st.markdown("**Villas Current Market performance is measured by the percent change of composite price for last 90 days compared to initial period (first quarter of 2010). Performance is shown by the three indicators below:**")
     kpi1,kpi2,kpi3 = st.columns(3)
     kpi1.metric("**Last 90 Days Small composite median Price**",f"{period_small_composite:,}","{0:.0%}".format(period_small_composite_prct_chg))
@@ -1090,7 +1151,7 @@ if  option == 'Market Historical Trend':
     start_date = end_date - datetime.timedelta(days=90)
     land_sales_select = land_sales[(land_sales['txs_date']<=end_day)&(land_sales['txs_date']>=start_day)]
     land_sales_select = land_sales_select[land_sales_select['land_usage'].isin(['Commercial','Residential'])]
-    all_usage_area_qtr_median_meter_prices = pd.DataFrame(land_sales_select.groupby(['land_usage','area_name_en','fst_qtr']).agg(qtr_median_meter_price = ('meter_sale_price','median'),qtr_median_price = ('actual_worth','median'), txs_count = ('transaction_id','count'))).reset_index()
+    #all_usage_area_qtr_median_meter_prices = pd.DataFrame(land_sales_select.groupby(['land_usage','area_name_en','fst_qtr']).agg(qtr_median_meter_price = ('meter_sale_price','median'),qtr_median_price = ('actual_worth','median'), txs_count = ('transaction_id','count'))).reset_index()
     #st.dataframe(all_usage_area_qtr_median_meter_prices)
     all_usage_qtr_median_meter_prices = pd.DataFrame(all_usage_area_qtr_median_meter_prices.groupby(['land_usage','fst_qtr']).agg(qtr_txs = ('txs_count','sum'))).reset_index()
     #st.dataframe(all_usage_qtr_median_meter_prices)
@@ -1126,9 +1187,23 @@ if  option == 'Market Historical Trend':
     initial_Residential = all_usage_qtr_median_meter_prices[(all_usage_qtr_median_meter_prices.land_usage == "Residential")&(all_usage_qtr_median_meter_prices.fst_qtr == '2010-01-01')]
     initial_Residential_composite = initial_Residential['composite_land_median_meter_price'].sum()
     period_Residential_composite_prct_chg = (period_Residential_composite - initial_Residential_composite) / initial_Residential_composite
+    flat_qtr_sum_txs = pd.DataFrame(all_usage_qtr_median_meter_prices.groupby(['fst_qtr']).agg(tot_qtr_txs = ('qtr_txs','sum'))).reset_index()
+    
     base3 = alt.Chart(all_usage_qtr_median_meter_prices).properties(height=300)
-    line3 = base3.mark_line(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('composite_land_median_meter_price', title='Composite Median Meter Price'), tooltip = ['fst_qtr','land_usage','composite_land_median_meter_price','qtr_txs'],color=alt.Color('land_usage', title='Land Usage',legend=alt.Legend(orient='right')))
-    st.altair_chart(line3,use_container_width=True)     
+    line3 = base3.mark_line(size=2).encode(x=alt.X('fst_qtr:T', title='Date'),y=alt.Y('composite_land_median_meter_price', title='Composite Median Meter Price'), tooltip = ['fst_qtr','land_usage','composite_land_median_meter_price','qtr_txs'],color=alt.Color('land_usage', title='Land Usage',legend=alt.Legend(orient='right')))
+    #st.altair_chart(line3,use_container_width=True)     
+    #land_qtr_txs = all_usage_qtr_median_meter_prices[all_usage_qtr_median_meter_prices.reg_type_id == registry_code]
+    land_qtr_sum_txs = pd.DataFrame(all_usage_qtr_median_meter_prices.groupby(['fst_qtr']).agg(tot_qtr_txs = ('qtr_txs','sum'))).reset_index()
+    base12 = alt.Chart(land_qtr_sum_txs).properties(height=400)
+    point12 = base12.mark_bar().encode(x=alt.X('fst_qtr:T', title="Date"), y=alt.Y('tot_qtr_txs' + ':Q', title="Qtr Txs"))
+    base13 = alt.Chart(land_qtr_sum_txs)
+    line13 = base13.mark_line(color='red').transform_window(rolling_mean = 'mean(tot_qtr_txs)',frame = [-3,0]).encode(x='fst_qtr:T',y='rolling_mean:Q')
+    line14 = (point12 + line13)
+    tab1, tab2 = st.tabs(["**Composite median prices (qtr)**", "**Quarterly Txs**"])
+    with tab1:
+        st.altair_chart(line3,use_container_width=True)
+    with tab2:
+        st.altair_chart(line14,use_container_width=True)
     st.markdown("**Lands Current Market performance is measured by the percent change of composite price for last 90 days compared to initial period (first quarter of 2010). Performance is shown by the three indicators below:**")
     kpi1,kpi2 = st.columns(2)
     kpi1.metric("**Last 90 Days Commercial composite median Meter Price**",f"{period_Commercial_composite:,}","{0:.0%}".format(period_Commercial_composite_prct_chg))
