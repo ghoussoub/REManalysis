@@ -83,15 +83,15 @@ def load_lands_sum():
     return(df)
 def perf_class(x):
     if x >= 20:
-         perf = "more than 20%"
+         perf = "(> 20%)"
     elif x < 20 and x >= 5:
-         perf = "btw 5 to 20%"
-    elif x < 5 and x > -5:
-         perf = "btw -5 & 5%"
-    elif x < -5 and x > -20:
-         perf = "btw -20 & -5%"
-    elif x <= -20:
-         perf = "less than -20%"
+         perf = "(5 to 20%)"
+    elif x < 5 and x >= -5:
+         perf = "(-5 to 5%)"
+    elif x < -5 and x >= -20:
+         perf = "(-20 to -5%)"
+    elif x < -20:
+         perf = "(< -20%)"
     else:
         perf = "N/A"
     return perf  
@@ -280,7 +280,7 @@ st.sidebar.markdown("**Settings**")
 #st.sidebar.markdown('###')
 #item1 = st.sidebar.selectbox('Item 1', item_list, index=0)
 #item2 = st.sidebar.selectbox('Item 2', item_list, index=3)
-option = st.sidebar.selectbox("**Select Dashboard?**", ('Overview','Market Historical Trend','Comparative Areas Performance (flats)','Area Specific Flats Prices Analysis', 'Flats Transactions Search','Comparative Areas Performance (villas)','Area Specific Villas Prices Analysis','Villas Transactions Search','Comparative Areas Performance (lands)','Area Specific Lands Prices Analysis','Lands Transactions Search','Flat Price Estimation'))
+option = st.sidebar.selectbox("**Select Dashboard?**", ('Overview','Market Historical Trend','Comparative Areas Performance (flats)','Area Specific Flats Prices Analysis', 'Comparative Area/buildings Performance (flats)','Flats Transactions Search','Comparative Areas Performance (villas)','Area Specific Villas Prices Analysis','Villas Transactions Search','Comparative Areas Performance (lands)','Area Specific Lands Prices Analysis','Lands Transactions Search','Flat Price Estimation'))
 if option == 'Area Specific Flats Prices Analysis':
     registry = st.sidebar.selectbox('**Select registry type?**',('Existing Properties','Off-Plan Properties'))
     if registry == "Existing Properties":
@@ -349,7 +349,8 @@ if option == 'Area Specific Flats Prices Analysis':
     single_area_qtr_median_prices_df = single_area_qtr_median_prices.reset_index()
     single_area_median_prices_df['rolling_mean'] = single_area_median_prices_df.set_index('fst_day').groupby('Room_En', sort=False)['single_area_median_price'].rolling(9).mean().round(0).to_numpy()
     single_area_median_prices_df['meter_rolling_mean'] = single_area_median_prices_df.set_index('fst_day').groupby('Room_En', sort=False)['single_area_median_meter_price'].rolling(9).mean().round(0).to_numpy()
-    single_area_median_prices_df['txs_count_rolling_mean'] = single_area_median_prices_df.set_index('fst_day').groupby('Room_En', sort=False)['single_area_txs_count'].rolling(9).mean().round(0).to_numpy()
+    #single_area_median_prices_df['txs_count_rolling_mean'] = single_area_median_prices_df.set_index('fst_day').groupby('Room_En', sort=False)['single_area_txs_count'].rolling(9).mean().round(0).to_numpy()
+    single_area_qtr_median_prices_df['txs_count_rolling_mean'] = single_area_qtr_median_prices_df.set_index('fst_qtr').groupby('Room_En', sort=False)['single_area_txs_count'].rolling(3).mean().round(0).to_numpy()
     single_area_median_prices_start_df = single_area_median_prices_df[single_area_median_prices_df['fst_day']==start_day]
     single_area_median_prices_added_start_df = pd.merge(single_area_median_prices_df,single_area_median_prices_start_df,left_on="Room_En",right_on="Room_En",how = "left")
     single_area_median_prices_added_start_df['price_pct_chg'] = 100*(single_area_median_prices_added_start_df['single_area_median_price_x']-single_area_median_prices_added_start_df['single_area_median_price_y'])/single_area_median_prices_added_start_df['single_area_median_price_y']
@@ -370,23 +371,23 @@ if option == 'Area Specific Flats Prices Analysis':
     #st.dataframe(merged_flat_building)
     txs_age_count = pd.DataFrame(merged_flat_building.groupby(['building_age']).agg(age_txs_count = ('transaction_id','count'),flat_median_size = ('procedure_area','median'), flat_median_price = ('actual_worth','median'), flat_median_meter_price = ('meter_sale_price_x','median'))).reset_index()
     #st.dataframe(txs_age_count)
-    base = alt.Chart(flat_sales_selected_period).properties(height=300)
-    point = base.mark_circle(size=20).encode(x=alt.X('actual_worth' + ':Q', title="price"), y=alt.Y('procedure_area' + ':Q', title="size"),color=alt.Color('Room_En', title='Rooms',legend=alt.Legend(orient='bottom-right')))
+    base = alt.Chart(flat_sales_selected_period).properties(height=400)
+    point = base.mark_circle(size=20).encode(x=alt.X('actual_worth' + ':Q', title="price"), y=alt.Y('procedure_area' + ':Q', title="size"), tooltip = ['area_name_en','building_name_en','actual_worth','procedure_area'],  color=alt.Color('Room_En', title='Rooms',legend=alt.Legend(orient='bottom-right')))
     #st.altair_chart(point, use_container_width=True)
-    base1 = alt.Chart(merged_flat_building).properties(height = 300)
+    base1 = alt.Chart(merged_flat_building).properties(height = 400)
     point1 = base1.mark_circle(size=20).encode(x=alt.X('actual_worth' + ':Q', title="price"), y=alt.Y('building_age' + ':Q', title="Bldg Age"),color=alt.Color('Room_En', title='Rooms',legend=alt.Legend(orient='bottom-right')))
     #st.altair_chart(point1, use_container_width=True)
-    base2 = alt.Chart(merged_flat_building).properties(height = 300)
+    base2 = alt.Chart(merged_flat_building).properties(height = 400)
     point2 = base2.mark_circle(size=20).encode(x=alt.X('procedure_area' + ':Q', title="size"), y=alt.Y('building_age' + ':Q', title="Bldg Age"),color=alt.Color('Room_En', title='Rooms',legend=alt.Legend(orient='bottom-right')))
     #txs_aging_count = merged_flat_building.transaction_id.count()
     #st.write(txs_aging_count)
-    base3 = alt.Chart(txs_age_count).properties(height = 300)
+    base3 = alt.Chart(txs_age_count).properties(height = 400)
     point3 = base3.mark_bar().encode(x=alt.X('building_age' + ':Q', title="Age"), y=alt.Y('age_txs_count' + ':Q', title="Txs Count"))
-    base4 = alt.Chart(txs_age_count).properties(height = 300)
+    base4 = alt.Chart(txs_age_count).properties(height = 400)
     point4 = base4.mark_bar().encode(x=alt.X('building_age' + ':Q', title="Age"), y=alt.Y('flat_median_meter_price' + ':Q', title="Median Meter Price"))
-    base5 = alt.Chart(txs_age_count).properties(height = 300)
+    base5 = alt.Chart(txs_age_count).properties(height = 400)
     point5 = base5.mark_bar().encode(x=alt.X('building_age' + ':Q', title="Age"), y=alt.Y('flat_median_price' + ':Q', title="Median Price"))
-    base6 = alt.Chart(txs_age_count).properties(height = 300)
+    base6 = alt.Chart(txs_age_count).properties(height = 400)
     point6 = base6.mark_bar().encode(x=alt.X('building_age' + ':Q', title="Age"), y=alt.Y('flat_median_size' + ':Q', title="Median Size"))
     tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(["**Price vs Size**", "**Price vs Building Age**","**Size vs Age**","**Age/Txs Count**","**Age/Meter Price**","**Age/Price**","**Age/Median Size**"])
     with tab1:
@@ -408,24 +409,26 @@ if option == 'Area Specific Flats Prices Analysis':
     room_radio_selection = st.radio("**Select Flat Rooms:**", options = ['1 B/R','2 B/R','3 B/R'],horizontal = True)
     rolling_room_selection = single_area_median_prices_df[single_area_median_prices_df.Room_En == room_radio_selection]
     qtr_median_room_selection = single_area_qtr_median_prices_df[single_area_qtr_median_prices_df.Room_En == room_radio_selection]
-    base10 = alt.Chart(qtr_median_room_selection).properties(height=300)
+    base10 = alt.Chart(qtr_median_room_selection).properties(height=400)
     line10 = base10.mark_bar(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('single_area_qtr_median_price', title='median price'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    base11 = alt.Chart(rolling_room_selection).properties(height=300)
+    base11 = alt.Chart(rolling_room_selection).properties(height=400)
     #line11 = base11.mark_line(size=2).encode(x=alt.X('fst_day', title='Date'),y=alt.Y('rolling_mean', title='rolling median price'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
     line11 = base11.mark_line(color='red').encode(x=alt.X('fst_day', title='Date'),y=alt.Y('rolling_mean', title='rolling median price'))
     chart10 = (line10 + line11)
     #st.altair_chart(chart10,use_container_width=True)
-    base12 = alt.Chart(qtr_median_room_selection).properties(height=300)
+    base12 = alt.Chart(qtr_median_room_selection).properties(height=400)
     line12 = base12.mark_bar(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('single_area_qtr_median_meter_price', title='median meter price'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    base13 = alt.Chart(rolling_room_selection).properties(height=300)
+    base13 = alt.Chart(rolling_room_selection).properties(height=400)
     #line13 = base13.mark_line(size=2).encode(x=alt.X('fst_day', title='Date'),y=alt.Y('meter_rolling_mean', title='rolling median meter price'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
     line13 = base13.mark_line(color='red').encode(x=alt.X('fst_day', title='Date'),y=alt.Y('meter_rolling_mean', title='rolling median meter price'))
     chart12 = (line12 + line13)
     #st.altair_chart(chart12,use_container_width=True)
-    base14 = alt.Chart(qtr_median_room_selection).properties(height=300)
+    base14 = alt.Chart(qtr_median_room_selection).properties(height=400)
     line14 = base14.mark_bar(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('single_area_txs_count', title='Qtr txs count'),color=alt.Color('Room_En', title='Flat Size',legend=alt.Legend(orient='right')))
-    base15 = alt.Chart(rolling_room_selection).properties(height=300)
-    line15 = base15.mark_line(color='red').encode(x=alt.X('fst_day', title='Date'),y=alt.Y('txs_count_rolling_mean', title='Monthly Moving Average'))
+    #base15 = alt.Chart(rolling_room_selection).properties(height=300)
+    base15 = alt.Chart(qtr_median_room_selection).properties(height=400)
+    #line15 = base15.mark_line(color='red').encode(x=alt.X('fst_day', title='Date'),y=alt.Y('txs_count_rolling_mean', title='Monthly Moving Average'))
+    line15 = base15.mark_line(color='red').encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('txs_count_rolling_mean', title='Quarterly Moving Average'))
     chart14 = (line14 + line15)
     #st.altair_chart(chart14,use_container_width=True)
     tab1, tab2 , tab3 = st.tabs(["**Median Prices**", "**Median Meter Prices**", "**Transactions Count**"])
@@ -435,7 +438,67 @@ if option == 'Area Specific Flats Prices Analysis':
         st.altair_chart(chart12,use_container_width=True)
     with tab3:
         st.altair_chart(chart14,use_container_width=True)
-    
+        
+if option == 'Comparative Area/buildings Performance (flats)':
+    registry = st.sidebar.selectbox('**Select registry type?**',('Existing Properties','Off-Plan Properties'))
+    if registry == "Existing Properties":
+        registry_code = 1
+    else:
+        registry_code = 0
+    flat_area = flat_sales['area_name_en'].unique()
+    select_area = st.sidebar.selectbox('**Select area?**',flat_area)
+    area_buildings = building[(building['area_name_en'] == select_area)]
+    #st.header("Area Market Analysis of : {}".format(select_area))
+    st.header(":blue[Comparative buildings Performance]"+":blue[ of :] ")
+    st.subheader(select_area)
+    st.markdown("**The metrics below are calculated based on last 90 days period building median meter price compared to same period last year (YoY)**")
+    st.markdown('###')
+    st.subheader("Interactive Buildings Performance Chart")
+    #st.markdown('')
+    perf_radio_selection = st.radio("**Select Building Performance Range:**", options = ['All ranges','(> 20%)','(5 to 20%)','(-5 to 5%)','(-20 to -5%)','(< -20%)'],horizontal = True)
+    end_day = flat_sales['txs_date'].max()
+    end_date = flat_sales['txs_date'].max()
+    start_date = end_date - datetime.timedelta(days=90)
+    flat_sales_selected_period = flat_sales[(flat_sales['reg_type_id']==registry_code)&(flat_sales['area_name_en']==select_area)&(flat_sales['txs_date']<=end_date)&(flat_sales['txs_date']>=start_date)]
+    #this_period_count = flat_sales_selected_period['transaction_id'].count()
+    #this_period_median_meter_price = int(flat_sales_selected_period['meter_sale_price'].median()) if this_period_count != 0 else 0
+    flat_sales_selected_previous_period = flat_sales[(flat_sales['reg_type_id']==registry_code)&(flat_sales['area_name_en']==select_area)&(flat_sales['txs_date']<=end_date - datetime.timedelta(days=365))&(flat_sales['txs_date']>=end_date - datetime.timedelta(days=455))]
+    #previous_period_count = flat_sales_selected_previous_period['transaction_id'].count()
+    #this_period_txs_count_prct_chg = (this_period_count-previous_period_count)/previous_period_count if this_period_count != 0 else 0
+    #last_period_median_meter_price = flat_sales_selected_previous_period['meter_sale_price'].median()
+    #this_period_median_meter_price_prct_chg = (this_period_median_meter_price-last_period_median_meter_price)/last_period_median_meter_price
+    #this_period_median_flat_size = int(flat_sales_selected_period['procedure_area'].median())
+    #last_period_median_flat_size = flat_sales_selected_previous_period['procedure_area'].median()
+    #this_period_median_flat_size_prct_chg = (this_period_median_flat_size-last_period_median_flat_size)/last_period_median_flat_size
+    this_period_building_meter_price = pd.DataFrame(flat_sales_selected_period.groupby(['building_name_en']).agg(this_period_building_meter_price = ('meter_sale_price','median'), this_period_txs_count = ('transaction_id','count'))).reset_index()  
+    this_period_building_meter_price_age = pd.merge(this_period_building_meter_price,area_buildings,on = 'building_name_en', how = "left")
+    last_period_building_meter_price = pd.DataFrame(flat_sales_selected_previous_period.groupby(['building_name_en']).agg(last_period_building_meter_price = ('meter_sale_price','median'), last_period_txs_count = ('transaction_id','count'))).reset_index() 
+    merged_buildings_periods = pd.merge(this_period_building_meter_price_age,last_period_building_meter_price, on = "building_name_en",how = "left")
+    #this_period_median_meter_price_prct_chg = (this_period_building_meter_price-last_period_building_meter_price)/last_period_building_meter_price
+    merged_buildings_periods['prct_meter_price_chg'] = 100 * (merged_buildings_periods['this_period_building_meter_price'] - merged_buildings_periods['last_period_building_meter_price'])/merged_buildings_periods['last_period_building_meter_price'] 
+    merged_buildings_periods['perf_class'] = merged_buildings_periods['prct_meter_price_chg'].apply(lambda x: perf_class(x))
+    bldg_perf_class = pd.DataFrame(merged_buildings_periods.groupby(['perf_class']).agg(class_count = ('building_name_en','count' ))).reset_index()
+    if perf_radio_selection == "All ranges":
+        reduced_merged = merged_buildings_periods
+    else: reduced_merged = merged_buildings_periods[(merged_buildings_periods['perf_class'] == perf_radio_selection)]
+    tot_subset_count = reduced_merged['building_name_en'].count()
+    #st.dataframe(bldg_perf_class)
+    base1 = alt.Chart(reduced_merged).properties(height = 400)
+    point1 = base1.mark_circle().encode(x=alt.X('building_age' + ':Q', title="Age"), y=alt.Y('this_period_building_meter_price' + ':Q', title="Building Meter Price"),size = 'this_period_txs_count', tooltip = ['building_name_en','this_period_txs_count','building_age','this_period_building_meter_price','prct_meter_price_chg'],color=alt.Color('perf_class', title='Bldg meter price vs Age',legend=alt.Legend(orient='right'))).interactive()
+    base = alt.Chart(bldg_perf_class).encode(theta=alt.Theta("class_count:Q", stack=True), color=alt.Color("perf_class:N", legend=None))
+    pie = base.mark_arc(outerRadius=120)
+    text = base.mark_text(radius=150, size=15).encode(text="perf_class:N")
+    chart = pie + text
+    tab1, tab2 = st.tabs(["**Bldg Meter Price/Age Performance**", "**Bldg Perf. Class Pie Chart**"])
+    with tab1:
+        st.altair_chart(point1,use_container_width=True)
+    with tab2:
+        st.altair_chart(chart,use_container_width=True)
+    st.write(f":green[**Number of Buildings in Performance class:**] **{tot_subset_count}**")
+    st.markdown('###')
+    st.subheader('Area/Buildings Performance Details (for selected performance range)')
+    displayed_reduced_merged = reduced_merged[['building_name_en','building_age','this_period_building_meter_price','this_period_txs_count','prct_meter_price_chg']]
+    st.dataframe(displayed_reduced_merged)
     
 if option == 'Comparative Areas Performance (flats)': 
     #st.header(option)
@@ -462,6 +525,8 @@ if option == 'Comparative Areas Performance (flats)':
     merged_current_previous_period['area_txs_count_prct_chg'] = 100 * (merged_current_previous_period['area_txs_count']-merged_current_previous_period['previous_area_txs_count'])/merged_current_previous_period['previous_area_txs_count']
     merged_subset = merged_current_previous_period[['area_name_en','area_median_price','median_price_prct_chg','area_median_meter_price','median_meter_price_prct_chg','flat_median_size','area_txs_count','area_txs_count_prct_chg']]
     merged_subset['perf_class'] = merged_subset['median_price_prct_chg'].apply(lambda x: perf_class(x))
+    area_perf_class = pd.DataFrame(merged_subset.groupby(['perf_class']).agg(class_count = ('area_name_en','count' ))).reset_index()
+    tot_subset_count = merged_subset['area_name_en'].count()
     #merged_subset.rename(columns = {'area_name_en':'Area Name','area_median_price':'Med. Price','median_price_prct_chg':'% Price Chg','area_median_meter_price':'Med. Mtr Price','median_meter_price_prct_chg':'% Mtr Chg','flat_median_size' : 'Flat Size','area_txs_count':'Txs Count','area_txs_count_prct_chg':'% Txs Chg'},inplace = True)
     #merged_subset['% Price Chg'] = merged_subset['% Price Chg'].astype(float).map("{:.2%}".format)
     #merged_subset['% Mtr Chg'] = merged_subset['% Mtr Chg'].astype(float).map("{:.2%}".format)
@@ -477,7 +542,7 @@ if option == 'Comparative Areas Performance (flats)':
     st.markdown('###')
     st.subheader("Interactive Areas Performance Chart")
     #st.markdown('')
-    perf_radio_selection = st.radio("**Select Area Performance Range:**", options = ['All ranges','more than 20%','btw 5 to 20%','btw -5 & 5%','btw -20 & -5%','less than -20%'],horizontal = True)
+    perf_radio_selection = st.radio("**Select Area Performance Range:**", options = ['All ranges','(> 20%)','(5 to 20%)','(-5 to 5%)','(-20 to -5%)','(< -20%)'],horizontal = True)
     #slider1,slider2,slider3= st.columns(3)
     #with slider1:
       #  slider1 = st.slider("Price prct Change Range:",min_value = merged_subset['median_price_prct_chg'].min(),max_value = merged_subset['median_price_prct_chg'].max(),value = (merged_subset['median_price_prct_chg'].min(),merged_subset['median_price_prct_chg'].max()))
@@ -488,13 +553,24 @@ if option == 'Comparative Areas Performance (flats)':
     if perf_radio_selection == "All ranges":
         reduced_merged = merged_subset
     else: reduced_merged = merged_subset[(merged_subset['perf_class'] == perf_radio_selection)]
-    base10 = alt.Chart(reduced_merged).properties(height=300)
+    base10 = alt.Chart(reduced_merged).properties(height=400)
     point10 = base10.mark_circle(size=20).encode(x=alt.X('area_median_price' + ':Q', title="price"), y=alt.Y('flat_median_size' + ':Q', title="Flat Size"),size = 'area_txs_count', tooltip = ['area_name_en','area_txs_count','area_median_price','area_median_meter_price','flat_median_size','median_price_prct_chg'],color=alt.Color('perf_class', title='Area Med. Value vs Size',legend=alt.Legend(orient='right'))).interactive()
+    base = alt.Chart(area_perf_class).encode(theta=alt.Theta("class_count:Q", stack=True), color=alt.Color("perf_class:N", legend=None))
+    pie = base.mark_arc(outerRadius=120)
+    text = base.mark_text(radius=150, size=15).encode(text="perf_class:N")
+    chart = pie + text
     #point10_text = base10.mark_text
     #point10 = base10.mark_point(size=20).encode(x=alt.X('area_median_price' + ':Q', title="price"), y=alt.Y('flat_median_size' + ':Q', title="Flat Size"),size = 'area_txs_count')
     #text = point10.mark_text(align='left',baseline='middle',dx=1).encode(text='area_name_en')
     #point10 + text
-    st.altair_chart(point10, use_container_width=True)
+    tab1, tab2 = st.tabs(["**Area (Price/Size) Performance**", "**Area Perf. Class Pie Chart**"])
+    with tab1:
+        st.altair_chart(point10, use_container_width=True)
+    with tab2:
+        st.altair_chart(chart,use_container_width=True)
+    #st.altair_chart(point10, use_container_width=True)
+    tot_class = reduced_merged['area_name_en'].count()
+    st.write(f":green[**Number of Area in Performance class:**] **{tot_class}**")
     st.markdown('###')
     st.subheader('Areas Performance Details (for selected performance range)')
     st.dataframe(reduced_merged)
@@ -568,7 +644,7 @@ if  option == 'Comparative Areas Performance (villas)':
         registry_code = 1
     else:
         registry_code = 0
-    select_size_range = st.sidebar.selectbox('**Select Villa Size Range**', ('All Sizes','less than 300','btw 300 to 600','more than 600 SQM'))
+    select_size_range = st.sidebar.selectbox('**Select Villa Size Range**', ('All Sizes','less than 250','btw 250 to 500','more than 500 SQM'))
     end_date = villa_sales['txs_date'].max()
     start_date = end_date - datetime.timedelta(days=90)
     #villa_sales['size_range'] = villa_sales['procedure_area'].apply(lambda x: size_range(x))
@@ -590,6 +666,7 @@ if  option == 'Comparative Areas Performance (villas)':
     merged_current_previous_period['area_txs_count_prct_chg'] = 100 * (merged_current_previous_period['area_txs_count']-merged_current_previous_period['previous_area_txs_count'])/merged_current_previous_period['previous_area_txs_count']
     merged_subset = merged_current_previous_period[['area_name_en','area_median_price','median_price_prct_chg','area_median_meter_price','median_meter_price_prct_chg','villa_median_size','area_txs_count','area_txs_count_prct_chg']]
     merged_subset['perf_class'] = merged_subset['median_price_prct_chg'].apply(lambda x: perf_class(x))
+    area_perf_class = pd.DataFrame(merged_subset.groupby(['perf_class']).agg(class_count = ('area_name_en','count' ))).reset_index()
     #merged_subset.rename(columns = {'area_name_en':'Area Name','area_median_price':'Med. Price','median_price_prct_chg':'% Price Chg','area_median_meter_price':'Med. Mtr Price','median_meter_price_prct_chg':'% Mtr Chg','flat_median_size' : 'Flat Size','area_txs_count':'Txs Count','area_txs_count_prct_chg':'% Txs Chg'},inplace = True)
     #merged_subset['% Price Chg'] = merged_subset['% Price Chg'].astype(float).map("{:.2%}".format)
     #merged_subset['% Mtr Chg'] = merged_subset['% Mtr Chg'].astype(float).map("{:.2%}".format)
@@ -604,7 +681,7 @@ if  option == 'Comparative Areas Performance (villas)':
     st.markdown('###')
     st.header("Interactive Areas Performance Chart")
     #st.markdown('')
-    perf_radio_selection = st.radio("**Select Area Performance Range:**", options = ['All ranges','more than 20%','btw 5 to 20%','btw -5 & 5%','btw -20 & -5%','less than -20%'],horizontal = True)
+    perf_radio_selection = st.radio("**Select Area Performance Range:**", options = ['All ranges','(> 20%)','(5 to 20%)','(-5 to 5%)','(-20 to -5%)','(< -20%)'],horizontal = True)
     #slider1,slider2,slider3= st.columns(3)
     #with slider1:
       #  slider1 = st.slider("Price prct Change Range:",min_value = merged_subset['median_price_prct_chg'].min(),max_value = merged_subset['median_price_prct_chg'].max(),value = (merged_subset['median_price_prct_chg'].min(),merged_subset['median_price_prct_chg'].max()))
@@ -615,13 +692,28 @@ if  option == 'Comparative Areas Performance (villas)':
     if perf_radio_selection == "All ranges":
         reduced_merged = merged_subset
     else: reduced_merged = merged_subset[(merged_subset['perf_class'] == perf_radio_selection)]
-    base10 = alt.Chart(reduced_merged).properties(height=300)
+    base10 = alt.Chart(reduced_merged).properties(height=400)
     point10 = base10.mark_circle(size=20).encode(x=alt.X('area_median_price' + ':Q', title="price"), y=alt.Y('villa_median_size' + ':Q', title="Villa Size"),size = 'area_txs_count', tooltip = ['area_name_en','area_txs_count','area_median_price','area_median_meter_price','villa_median_size','median_price_prct_chg'],color=alt.Color('perf_class', title='Area Med. Value vs Size',legend=alt.Legend(orient='right'))).interactive()
+    base = alt.Chart(area_perf_class).encode(theta=alt.Theta("class_count:Q", stack=True), color=alt.Color("perf_class:N", legend=None))
+    pie = base.mark_arc(outerRadius=120)
+    text = base.mark_text(radius=150, size=15).encode(text="perf_class:N")
+    chart = pie + text
     #point10_text = base10.mark_text
     #point10 = base10.mark_point(size=20).encode(x=alt.X('area_median_price' + ':Q', title="price"), y=alt.Y('flat_median_size' + ':Q', title="Flat Size"),size = 'area_txs_count')
     #text = point10.mark_text(align='left',baseline='middle',dx=1).encode(text='area_name_en')
     #point10 + text
-    st.altair_chart(point10, use_container_width=True)
+    tab1, tab2 = st.tabs(["**Area (Price/Size) Performance**", "**Area Perf. Class Pie Chart**"])
+    with tab1:
+        st.altair_chart(point10, use_container_width=True)
+    with tab2:
+        st.altair_chart(chart,use_container_width=True)
+    #point10_text = base10.mark_text
+    #point10 = base10.mark_point(size=20).encode(x=alt.X('area_median_price' + ':Q', title="price"), y=alt.Y('flat_median_size' + ':Q', title="Flat Size"),size = 'area_txs_count')
+    #text = point10.mark_text(align='left',baseline='middle',dx=1).encode(text='area_name_en')
+    #point10 + text
+    #st.altair_chart(point10, use_container_width=True)
+    tot_class = reduced_merged['area_name_en'].count()
+    st.write(f":green[**Number of Area in Performance class:**] **{tot_class}**")
     st.markdown('###')
     st.subheader('Areas Performance Details (for selected performance range)')
     st.dataframe(reduced_merged)
@@ -697,7 +789,8 @@ if  option == 'Area Specific Villas Prices Analysis':
     #single_area_median_prices_df['rolling_mean'] = single_area_median_prices_df.set_index('fst_day').groupby('Room_En', sort=False)['single_area_median_price'].rolling(6).mean().round(2).to_numpy()
     single_area_median_prices_df['rolling_mean'] = single_area_median_prices_df.set_index('fst_day')['single_area_median_price'].rolling(9).mean().round(2).to_numpy()
     single_area_median_prices_df['meter_rolling_mean'] = single_area_median_prices_df.set_index('fst_day')['single_area_median_meter_price'].rolling(9).mean().round(2).to_numpy()
-    single_area_median_prices_df['txs_count_rolling_mean'] = single_area_median_prices_df.set_index('fst_day')['single_area_txs_count'].rolling(9).mean().round(2).to_numpy()
+    #single_area_median_prices_df['txs_count_rolling_mean'] = single_area_median_prices_df.set_index('fst_day')['single_area_txs_count'].rolling(9).mean().round(2).to_numpy()
+    single_area_qtr_median_prices_df['txs_count_rolling_mean'] = single_area_qtr_median_prices_df.set_index('fst_qtr')['single_area_txs_count'].rolling(3).mean().round(2).to_numpy()
     single_area_median_prices_start_df = single_area_median_prices_df[single_area_median_prices_df['fst_day']==start_day]
     #single_area_median_prices_added_start_df = pd.merge(single_area_median_prices_df,single_area_median_prices_start_df,left_on="Room_En",right_on="Room_En",how = "left")
     #single_area_median_prices_added_start_df['price_pct_chg'] = 100*(single_area_median_prices_added_start_df['single_area_median_price_x']-single_area_median_prices_added_start_df['single_area_median_price_y'])/single_area_median_prices_added_start_df['single_area_median_price_y']
@@ -708,7 +801,7 @@ if  option == 'Area Specific Villas Prices Analysis':
     #kpi6.metric("Last 90 Days 3 B/R median Price",f"{this_period_3bed_median_price:,}","{0:.0%}".format(this_period_3bed_price_pct_chg))
     st.subheader("Last 90 Days txs Scatter Plot (Price vs Size)")
     villa_sales_scatter_plot = villa_sales[(villa_sales['area_name_en']==select_area)&(villa_sales['txs_date']<=end_date)&(villa_sales['txs_date']>=start_date)&(villa_sales['procedure_area']>=50)&(villa_sales['procedure_area']<=2000)]
-    base = alt.Chart(villa_sales_scatter_plot).properties(height=300)
+    base = alt.Chart(villa_sales_scatter_plot).properties(height=400)
     point = base.mark_circle(size=20).encode(x=alt.X('actual_worth' + ':Q', title="price"), y=alt.Y('procedure_area' + ':Q', title="size"),color=alt.Color('registry', title='registry',legend=alt.Legend(orient='bottom-right')))
     st.altair_chart(point, use_container_width=True)
     #col1, col2 = st.columns(2)
@@ -729,25 +822,25 @@ if  option == 'Area Specific Villas Prices Analysis':
     villa_sales_monthly_trend = single_area_median_prices_df[(single_area_median_prices_df['registry'] == registry_radio_selection)]
     #st.markdown("##")
     #st.subheader("Historical Graphs on Villas Prices and Activities Quarterly Trend (median villa price, median meter price & txs count)")
-    base5 = alt.Chart(villa_sales_qtr_trend).properties(height=300)
+    base5 = alt.Chart(villa_sales_qtr_trend).properties(height=400)
     line5 = base5.mark_bar(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('single_area_qtr_median_price', title='median price'),color=alt.Color('registry', title='registry',legend=alt.Legend(orient='right')))
     #st.altair_chart(line5,use_container_width=True)
-    base7 = alt.Chart(villa_sales_qtr_trend).properties(height=300)
+    base7 = alt.Chart(villa_sales_qtr_trend).properties(height=400)
     line7 = base7.mark_bar(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('single_area_qtr_median_meter_price', title='meter_median price'),color=alt.Color('registry', title='registry',legend=alt.Legend(orient='right')))
     #st.altair_chart(line7,use_container_width=True)
-    base6 = alt.Chart(villa_sales_qtr_trend).properties(height=300)
-    line6 = base6.mark_bar(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('single_area_txs_count', title='txs count'),color=alt.Color('registry', title='registry',legend=alt.Legend(orient='right')))
+    base6 = alt.Chart(villa_sales_qtr_trend).properties(height=400)
+    line6 = base6.mark_bar(size=2).encode(x=alt.X('fst_qtr:T', title='Date'),y=alt.Y('single_area_txs_count', title='txs count'),color=alt.Color('registry', title='registry',legend=alt.Legend(orient='right')))
     #st.altair_chart(line6,use_container_width=True)
     #st.subheader("Monthly Moving Averages Graphs (median price, median meter price & txs count)")
-    base3 = alt.Chart(villa_sales_monthly_trend).properties(height=300)
+    base3 = alt.Chart(villa_sales_monthly_trend).properties(height=400)
     line3 = base3.mark_line(color = 'red').encode(x=alt.X('fst_day', title='Date'),y=alt.Y('rolling_mean', title='rolling median price'))
     #st.altair_chart(line3,use_container_width=True)
     #with col2:
-    base4 = alt.Chart(villa_sales_monthly_trend).properties(height=300)
+    base4 = alt.Chart(villa_sales_monthly_trend).properties(height=400)
     line4 = base4.mark_line(color = 'red').encode(x=alt.X('fst_day', title='Date'),y=alt.Y('meter_rolling_mean', title='meter rolling median price'))
     #st.altair_chart(line4,use_container_width=True)
-    base8 = alt.Chart(villa_sales_monthly_trend).properties(height=300)
-    line8 = base8.mark_line(color = 'red').encode(x=alt.X('fst_day', title='Date'),y=alt.Y('txs_count_rolling_mean', title='monthly txs count ma'))
+    base8 = alt.Chart(villa_sales_qtr_trend).properties(height=400)
+    line8 = base8.mark_line(color = 'red').encode(x=alt.X('fst_qtr:T', title='Date'),y=alt.Y('txs_count_rolling_mean', title='Quartertly rolling txs count'))
     #st.altair_chart(line8,use_container_width=True)
     #flat_sales_select = flat_sales[(flat_sales['reg_type_en']==registry)]
     chart10 = (line5 + line3)
@@ -788,6 +881,7 @@ if  option == 'Comparative Areas Performance (lands)':
     merged_current_previous_period['area_txs_count_prct_chg'] = 100 * (merged_current_previous_period['area_txs_count']-merged_current_previous_period['previous_area_txs_count'])/merged_current_previous_period['previous_area_txs_count']
     merged_subset = merged_current_previous_period[['area_name_en','area_median_price','median_price_prct_chg','area_median_meter_price','median_meter_price_prct_chg','land_median_size','area_txs_count','area_txs_count_prct_chg']]
     merged_subset['perf_class'] = merged_subset['median_price_prct_chg'].apply(lambda x: perf_class(x))
+    area_perf_class = pd.DataFrame(merged_subset.groupby(['perf_class']).agg(class_count = ('area_name_en','count' ))).reset_index()
     #merged_subset.rename(columns = {'area_name_en':'Area Name','area_median_price':'Med. Price','median_price_prct_chg':'% Price Chg','area_median_meter_price':'Med. Mtr Price','median_meter_price_prct_chg':'% Mtr Chg','flat_median_size' : 'Flat Size','area_txs_count':'Txs Count','area_txs_count_prct_chg':'% Txs Chg'},inplace = True)
     #merged_subset['% Price Chg'] = merged_subset['% Price Chg'].astype(float).map("{:.2%}".format)
     #merged_subset['% Mtr Chg'] = merged_subset['% Mtr Chg'].astype(float).map("{:.2%}".format)
@@ -802,7 +896,7 @@ if  option == 'Comparative Areas Performance (lands)':
     st.markdown('###')
     st.header("Interactive Areas Performance Chart")
     #st.markdown('')
-    perf_radio_selection = st.radio("**Select Area Performance Range:**", options = ['All ranges','more than 20%','btw 5 to 20%','btw -5 & 5%','btw -20 & -5%','less than -20%'],horizontal = True)
+    perf_radio_selection = st.radio("**Select Area Performance Range:**", options = ['All ranges','(> 20%)','(5 to 20%)','(-5 to 5%)','(-20 to -5%)','(< -20%)'],horizontal = True)
     #slider1,slider2,slider3= st.columns(3)
     #with slider1:
       #  slider1 = st.slider("Price prct Change Range:",min_value = merged_subset['median_price_prct_chg'].min(),max_value = merged_subset['median_price_prct_chg'].max(),value = (merged_subset['median_price_prct_chg'].min(),merged_subset['median_price_prct_chg'].max()))
@@ -813,13 +907,28 @@ if  option == 'Comparative Areas Performance (lands)':
     if perf_radio_selection == "All ranges":
         reduced_merged = merged_subset
     else: reduced_merged = merged_subset[(merged_subset['perf_class'] == perf_radio_selection)]
-    base10 = alt.Chart(reduced_merged).properties(height=300)
+    base10 = alt.Chart(reduced_merged).properties(height=400)
     point10 = base10.mark_circle(size=20).encode(x=alt.X('area_median_price' + ':Q', title="price"), y=alt.Y('area_median_meter_price' + ':Q', title="Meter Price"),size = 'area_txs_count', tooltip = ['area_name_en','area_txs_count','area_median_price','area_median_meter_price','land_median_size','median_price_prct_chg'],color=alt.Color('perf_class', title='Area Med. Value vs Size',legend=alt.Legend(orient='right'))).interactive()
+    base = alt.Chart(area_perf_class).encode(theta=alt.Theta("class_count:Q", stack=True), color=alt.Color("perf_class:N", legend=None))
+    pie = base.mark_arc(outerRadius=120)
+    text = base.mark_text(radius=150, size=15).encode(text="perf_class:N")
+    chart = pie + text
     #point10_text = base10.mark_text
     #point10 = base10.mark_point(size=20).encode(x=alt.X('area_median_price' + ':Q', title="price"), y=alt.Y('flat_median_size' + ':Q', title="Flat Size"),size = 'area_txs_count')
     #text = point10.mark_text(align='left',baseline='middle',dx=1).encode(text='area_name_en')
     #point10 + text
-    st.altair_chart(point10, use_container_width=True)
+    tab1, tab2 = st.tabs(["**Area (Price/Meter Price) Performance**", "**Area Perf. Class Pie Chart**"])
+    with tab1:
+        st.altair_chart(point10, use_container_width=True)
+    with tab2:
+        st.altair_chart(chart,use_container_width=True)
+    #point10_text = base10.mark_text
+    #point10 = base10.mark_point(size=20).encode(x=alt.X('area_median_price' + ':Q', title="price"), y=alt.Y('flat_median_size' + ':Q', title="Flat Size"),size = 'area_txs_count')
+    #text = point10.mark_text(align='left',baseline='middle',dx=1).encode(text='area_name_en')
+    #point10 + text
+    #st.altair_chart(point10, use_container_width=True)
+    tot_class = reduced_merged['area_name_en'].count()
+    st.write(f":green[**Number of Area in Performance class:**] **{tot_class}**")
     st.markdown('###')
     st.subheader('Areas Performance Details (for selected performance range)')
     st.dataframe(reduced_merged)
@@ -879,6 +988,7 @@ if  option == 'Area Specific Lands Prices Analysis':
     single_area_median_prices_df = single_area_median_prices.reset_index()
     single_area_qtr_median_prices = pd.DataFrame(land_sales_select.groupby(['land_usage','fst_qtr']).agg(single_area_qtr_median_meter_price = ('meter_sale_price','median'),single_area_qtr_median_price = ('actual_worth','median'), single_area_txs_count = ('transaction_id','count')))  
     single_area_qtr_median_prices_df = single_area_qtr_median_prices.reset_index()
+    single_area_qtr_median_prices_df['txs_count_rolling_mean'] = single_area_qtr_median_prices_df.set_index('fst_qtr')['single_area_txs_count'].rolling(3).mean().round(2).to_numpy()
     #single_area_median_prices_df['rolling_mean'] = single_area_median_prices_df.set_index('fst_day').groupby('Room_En', sort=False)['single_area_median_price'].rolling(6).mean().round(2).to_numpy()
     single_area_median_prices_df['rolling_mean'] = single_area_median_prices_df.set_index('fst_day').groupby('land_usage',sort = False)['single_area_median_price'].rolling(6).mean().round(2).to_numpy()
     single_area_median_prices_df['meter_rolling_mean'] = single_area_median_prices_df.set_index('fst_day')['single_area_median_meter_price'].rolling(6).mean().round(2).to_numpy()
@@ -893,7 +1003,7 @@ if  option == 'Area Specific Lands Prices Analysis':
     #kpi6.metric("Last 90 Days 3 B/R median Price",f"{this_period_3bed_median_price:,}","{0:.0%}".format(this_period_3bed_price_pct_chg))
     st.subheader("Last 90 Days txs Scatter Plot (Price vs Size)")
     land_sales_scatter_plot = land_sales[(land_sales['area_name_en']==select_area)&(land_sales['txs_date']<=end_date)&(land_sales['txs_date']>=start_date)&(land_sales['procedure_area']>=50)&(land_sales['procedure_area']<=10000)]
-    base = alt.Chart(land_sales_scatter_plot).properties(height=300)
+    base = alt.Chart(land_sales_scatter_plot).properties(height=400)
     point = base.mark_circle(size=20).encode(x=alt.X('actual_worth' + ':Q', title="price"), y=alt.Y('procedure_area' + ':Q', title="size"),color=alt.Color('land_usage', title='Usage',legend=alt.Legend(orient='bottom-right')))
     st.altair_chart(point, use_container_width=True)
     #col1, col2 = st.columns(2)
@@ -914,25 +1024,25 @@ if  option == 'Area Specific Lands Prices Analysis':
     land_sales_monthly_trend = single_area_median_prices_df[(single_area_median_prices_df['land_usage'] == usage_radio_selection)]
     #st.markdown("##")
     #st.subheader("Historical Graphs on Lands Prices and Activities Quarterly Trend (median villa price, median meter price & txs count)")
-    base5 = alt.Chart(land_sales_qtr_trend).properties(height=300)
+    base5 = alt.Chart(land_sales_qtr_trend).properties(height=400)
     line5 = base5.mark_bar(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('single_area_qtr_median_price', title='median price'),color=alt.Color('land_usage', title='Usage',legend=alt.Legend(orient='right')))
     #st.altair_chart(line5,use_container_width=True)
-    base7 = alt.Chart(land_sales_qtr_trend).properties(height=300)
+    base7 = alt.Chart(land_sales_qtr_trend).properties(height=400)
     line7 = base7.mark_bar(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('single_area_qtr_median_meter_price', title='meter_median price'),color=alt.Color('land_usage', title='Usage',legend=alt.Legend(orient='right')))
     #st.altair_chart(line7,use_container_width=True)
-    base6 = alt.Chart(land_sales_qtr_trend).properties(height=300)
+    base6 = alt.Chart(land_sales_qtr_trend).properties(height=400)
     line6 = base6.mark_bar(size=2).encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('single_area_txs_count', title='txs count'),color=alt.Color('land_usage', title='Usage',legend=alt.Legend(orient='right')))
     #st.altair_chart(line6,use_container_width=True)
     #st.subheader("Monthly Moving Averages Graphs (median price, median meter price & txs count)")
-    base3 = alt.Chart(land_sales_monthly_trend).properties(height=300)
+    base3 = alt.Chart(land_sales_monthly_trend).properties(height=400)
     line3 = base3.mark_line(color = 'red').encode(x=alt.X('fst_day', title='Date'),y=alt.Y('rolling_mean', title='rolling median price'))
     #st.altair_chart(line3,use_container_width=True)
     #with col2:
-    base4 = alt.Chart(land_sales_monthly_trend).properties(height=300)
+    base4 = alt.Chart(land_sales_monthly_trend).properties(height=400)
     line4 = base4.mark_line(color = 'red').encode(x=alt.X('fst_day', title='Date'),y=alt.Y('meter_rolling_mean', title='meter rolling median price'))
     #st.altair_chart(line4,use_container_width=True)
-    base8 = alt.Chart(land_sales_monthly_trend).properties(height=300)
-    line8 = base8.mark_line(color = 'red').encode(x=alt.X('fst_day', title='Date'),y=alt.Y('txs_count_rolling_mean', title='monthly txs count ma'))
+    base8 = alt.Chart(land_sales_qtr_trend).properties(height=400)
+    line8 = base8.mark_line(color = 'red').encode(x=alt.X('fst_qtr', title='Date'),y=alt.Y('txs_count_rolling_mean', title='Quarterly rolling txs count'))
     #st.altair_chart(line8,use_container_width=True)
     chart10 = (line5 + line3)
     chart11 = (line7 + line4)
@@ -1087,6 +1197,7 @@ if  option == 'Market Historical Trend':
     area_villa_summary_copy['relative_price'] = area_villa_summary_copy.apply(lambda x:(x['relative_weight'])*(x['qtr_median_price']),axis = 1)
     #st.dataframe(area_summary_copy)
     all_registry_size_qtr_median_prices['composite_villa_median_price'] = all_registry_size_qtr_median_prices.apply(lambda x:agg_villa_area_prices(x['reg_type_id'],x['size_range'],x['fst_qtr']),axis=1)
+    all_registry_size_qtr_median_prices['rolling_mean'] = all_registry_size_qtr_median_prices.set_index('fst_qtr').groupby('size_range', sort=False)['composite_villa_median_price'].rolling(3).mean().round(0).to_numpy()
     #st.dataframe(all_registry_size_qtr_median_prices)
     #st.markdown("##")
     #st.subheader("Historical Graphs on Flats Prices and Activities Quarterly Trend (median flat price, median meter price & txs count)")
@@ -1124,11 +1235,15 @@ if  option == 'Market Historical Trend':
     base13 = alt.Chart(villa_qtr_sum_txs)
     line13 = base13.mark_line(color='red').transform_window(rolling_mean = 'mean(tot_qtr_txs)',frame = [-3,0]).encode(x='fst_qtr:T',y='rolling_mean:Q')
     line14 = (point12 + line13)
+    base15 = alt.Chart(all_registry_size_qtr_median_prices).properties(height=400)
+    line15 = base15.mark_line(size=2).encode(x=alt.X('fst_qtr:T', title='Date'),y=alt.Y('rolling_mean', title='Composite rolling Median Price'), tooltip = ['fst_qtr:T','size_range','rolling_mean'],color=alt.Color('size_range', title='Villa Size Range',legend=alt.Legend(orient='right')))                   
     
-    tab1, tab2 = st.tabs(["**Composite median prices (qtr)**", "**Quarterly Txs**"])
+    tab1, tab2,tab3 = st.tabs(["**Composite median prices (qtr)**", "**Composite Rolling Prices**","**Quarterly Txs**"])
     with tab1:
         st.altair_chart(line2,use_container_width=True)
     with tab2:
+        st.altair_chart(line15,use_container_width=True)
+    with tab3:
         st.altair_chart(line14,use_container_width=True)
         
     st.markdown("**Villas Current Market performance is measured by the percent change of composite price for last 90 days compared to initial period (first quarter of 2010). Performance is shown by the three indicators below:**")
@@ -1165,6 +1280,7 @@ if  option == 'Market Historical Trend':
     area_land_summary_copy['relative_meter_price'] = area_land_summary_copy.apply(lambda x:(x['relative_weight'])*(x['qtr_median_meter_price']),axis = 1)
     #st.dataframe(area_land_summary_copy)
     all_usage_qtr_median_meter_prices['composite_land_median_meter_price'] = all_usage_qtr_median_meter_prices.apply(lambda x:agg_land_area_prices(x['land_usage'],x['fst_qtr']),axis=1)
+    all_usage_qtr_median_meter_prices['rolling_mean'] = all_usage_qtr_median_meter_prices.set_index('fst_qtr').groupby('land_usage', sort=False)['composite_land_median_meter_price'].rolling(3).mean().round(0).to_numpy()
     #st.dataframe(all_usage_qtr_median_meter_prices)
     #st.markdown("##")
     #st.subheader("Historical Graphs on Flats Prices and Activities Quarterly Trend (median flat price, median meter price & txs count)")
@@ -1187,9 +1303,9 @@ if  option == 'Market Historical Trend':
     initial_Residential = all_usage_qtr_median_meter_prices[(all_usage_qtr_median_meter_prices.land_usage == "Residential")&(all_usage_qtr_median_meter_prices.fst_qtr == '2010-01-01')]
     initial_Residential_composite = initial_Residential['composite_land_median_meter_price'].sum()
     period_Residential_composite_prct_chg = (period_Residential_composite - initial_Residential_composite) / initial_Residential_composite
-    flat_qtr_sum_txs = pd.DataFrame(all_usage_qtr_median_meter_prices.groupby(['fst_qtr']).agg(tot_qtr_txs = ('qtr_txs','sum'))).reset_index()
+    #flat_qtr_sum_txs = pd.DataFrame(all_usage_qtr_median_meter_prices.groupby(['fst_qtr']).agg(tot_qtr_txs = ('qtr_txs','sum'))).reset_index()
     
-    base3 = alt.Chart(all_usage_qtr_median_meter_prices).properties(height=300)
+    base3 = alt.Chart(all_usage_qtr_median_meter_prices).properties(height=400)
     line3 = base3.mark_line(size=2).encode(x=alt.X('fst_qtr:T', title='Date'),y=alt.Y('composite_land_median_meter_price', title='Composite Median Meter Price'), tooltip = ['fst_qtr','land_usage','composite_land_median_meter_price','qtr_txs'],color=alt.Color('land_usage', title='Land Usage',legend=alt.Legend(orient='right')))
     #st.altair_chart(line3,use_container_width=True)     
     #land_qtr_txs = all_usage_qtr_median_meter_prices[all_usage_qtr_median_meter_prices.reg_type_id == registry_code]
@@ -1199,10 +1315,14 @@ if  option == 'Market Historical Trend':
     base13 = alt.Chart(land_qtr_sum_txs)
     line13 = base13.mark_line(color='red').transform_window(rolling_mean = 'mean(tot_qtr_txs)',frame = [-3,0]).encode(x='fst_qtr:T',y='rolling_mean:Q')
     line14 = (point12 + line13)
-    tab1, tab2 = st.tabs(["**Composite median prices (qtr)**", "**Quarterly Txs**"])
+    base15 = alt.Chart(all_usage_qtr_median_meter_prices).properties(height = 400)
+    line15 = base15.mark_line(size=2).encode(x=alt.X('fst_qtr:T', title='Date'),y=alt.Y('rolling_mean', title='Composite rolling Median Meter Price'), tooltip = ['fst_qtr:T','land_usage','rolling_mean'],color=alt.Color('land_usage', title='Land Usage',legend=alt.Legend(orient='right')))
+    tab1, tab2,tab3 = st.tabs(["**Composite median prices (qtr)**", "**Composite qtr rolling meter prices**","**Quarterly Txs**"])
     with tab1:
         st.altair_chart(line3,use_container_width=True)
     with tab2:
+        st.altair_chart(line15,use_container_width=True)
+    with tab3:
         st.altair_chart(line14,use_container_width=True)
     st.markdown("**Lands Current Market performance is measured by the percent change of composite price for last 90 days compared to initial period (first quarter of 2010). Performance is shown by the three indicators below:**")
     kpi1,kpi2 = st.columns(2)
