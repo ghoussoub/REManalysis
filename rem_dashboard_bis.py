@@ -54,8 +54,14 @@ def load_lands():
 def load_areas():
     return pd.read_csv(r'area.csv',encoding=('utf_8'))
 @st.cache()
+def load_areas_offplan():
+    return pd.read_csv(r'area_offplan.csv',encoding=('utf_8'))
+@st.cache()
 def load_buildings():
     return pd.read_csv(r'building.csv',encoding=('utf_8'))
+@st.cache()
+def load_buildings_offplan():
+    return pd.read_csv(r'building_offplan.csv',encoding=('utf_8'))
 @st.cache()
 def load_rooms():
     return pd.read_csv(r'rooms.csv',encoding=('utf_8'))
@@ -65,6 +71,12 @@ def load_model():
     regr = pickle.load(file)
     file.close()
     return regr
+@st.cache(allow_output_mutation=True)
+def load_model_offplan():
+    file = open(r'random_forest_regression_offplan.pkl','rb')
+    regr_offplan = pickle.load(file)
+    file.close()
+    return regr_offplan
 @st.cache()
 def load_flats_sum():
     df = pd.read_csv(r'flats_summary.csv',encoding=('utf_8'))
@@ -200,6 +212,7 @@ land_sales = lands.copy(deep = True)
 #land_sales['txs_date'] = pd.to_datetime(land_sales['txs_date'])
 #land_sales['land_usage'] = land_sales['property_usage_en'].apply(lambda x: land_class(x))
 building = load_buildings()
+building_offplan = load_buildings_offplan()
 Rooms = load_rooms()
 all_registry_rooms_area_qtr_median_prices = load_flats_sum()
 all_registry_rooms_area_mth_median_prices = load_flats_mth_sum()
@@ -280,7 +293,7 @@ st.sidebar.markdown("**Settings**")
 #st.sidebar.markdown('###')
 #item1 = st.sidebar.selectbox('Item 1', item_list, index=0)
 #item2 = st.sidebar.selectbox('Item 2', item_list, index=3)
-option = st.sidebar.selectbox("**Select Dashboard?**", ('Overview','Market Historical Trend','Comparative Areas Performance (flats)','Area Specific Flats Prices Analysis', 'Comparative Area/buildings Performance (flats)','Flats Transactions Search','Comparative Areas Performance (villas)','Area Specific Villas Prices Analysis','Villas Transactions Search','Comparative Areas Performance (lands)','Area Specific Lands Prices Analysis','Lands Transactions Search','Flat Price Estimation'))
+option = st.sidebar.selectbox("**Select Dashboard?**", ('Overview','Market Historical Trend','Comparative Areas Performance (flats)','Area Specific Flats Prices Analysis', 'Comparative Area/buildings Performance (flats)','Flats Transactions Search','Comparative Areas Performance (villas)','Area Specific Villas Prices Analysis','Villas Transactions Search','Comparative Areas Performance (lands)','Area Specific Lands Prices Analysis','Lands Transactions Search','Flat (Ready) Price Estimation', 'Flat (OffPlan) Price Estimation'))
 if option == 'Area Specific Flats Prices Analysis':
     registry = st.sidebar.selectbox('**Select registry type?**',('Existing Properties','Off-Plan Properties'))
     if registry == "Existing Properties":
@@ -594,8 +607,8 @@ if  option == 'Flats Transactions Search':
     select_txs['date'] = pd.to_datetime(select_txs['txs_date']).dt.date
     display_txs = select_txs[['date','area_name_en','building_name_en','Room_En','actual_worth','procedure_area','meter_sale_price']]
     st.dataframe(display_txs)
-if  option == 'Flat Price Estimation':
-    st.header(":blue[Flat Price Estimation]")
+if  option == 'Flat (Ready) Price Estimation':
+    st.header(":blue[Flat (Ready) Price Estimation]")
     st.write('**This Application makes an estimation of an existing flat price using machine learning technique and based on Open Data provided by Dubai Government (Digital Dubai Authority & Dubai Lands Department).**')
     #area = pd.read_csv(r'area.csv',encoding=('utf_8'))
     area = load_areas()
@@ -1446,3 +1459,45 @@ if option == 'Overview':
     st.markdown("    - **Area specific analysis (long and short term view) with respect to each property class.**")
     st.markdown('    - **Flats price estimation based on certain flat attributes using some machine learning techniques.**')
     st.subheader("- Best efforts have been made to provide correct and trusted results. ")
+if  option == 'Flat (OffPlan) Price Estimation':
+    st.header(":blue[Flat (OffPlan) Price Estimation]")
+    st.write('**This Application makes an estimation of an Off-Plan flat price using machine learning technique and based on Open Data provided by Dubai Government (Digital Dubai Authority & Dubai Lands Department).**')
+    #area = pd.read_csv(r'area.csv',encoding=('utf_8'))
+    area = load_areas_offplan()
+    area.sort_values(by=['area_name_en'], inplace=True)
+    #building = pd.read_csv(r'building.csv',encoding=('utf_8'))
+    #building = load_buildings()
+    #Rooms = pd.read_csv(r'rooms.csv',encoding=('utf_8'))
+    #Rooms = load_rooms()
+    selected_area = st.selectbox('**Select Area**',area['area_name_en'])
+    building_list = building_offplan[building_offplan['area_name_en']==selected_area]
+    selected_building = st.selectbox('**Select Building**',building_list['building_name_en'])
+    selected_room_no = st.selectbox('**No of Rooms**', options = ['Studio','1 B/R','2 B/R','3 B/R'])
+    rooms_selected_record = Rooms[Rooms['Room_En']==selected_room_no]
+    rooms = rooms_selected_record['Rooms']
+    flat_size = st.number_input('**Select Flat Size (SQM)**',min_value=20,max_value=500)
+    area_selected_record = area[area['area_name_en']==selected_area]
+    area_med_price = area_selected_record['area_median_meter_price']
+    area_building_id = selected_area+"/"+selected_building
+    building_selected_record = building_list[building_list['area_building']==area_building_id]
+    building_med_price = building_selected_record['meter_sale_price']
+    #building_age = building_selected_record['building_age']
+    st.write('the user inputs are {}'.format([selected_area,selected_building,selected_room_no,flat_size]))
+    X = np.array([int(rooms),int(flat_size),int(area_med_price),int(building_med_price)])
+    X_new = X.reshape(1,-1)
+    #st.write(X_new)
+    #with open(r'random_forest_regression.pkl','rb') as file:
+        #regr = pickle.load(file)
+    #file.close()
+    #X = np.array([3,16,131,11787,10053])
+    #X_new = X.reshape(1,-1)
+    regr_offplan = load_model_offplan()
+    result = regr_offplan.predict(X_new)
+    result_format = str(f"{int(result):,}")
+    st.write(f":red[**Prediction Result:**] **{result_format}**")
+    st.write(' (**The estimated value should be taken as a starting point of the estimation/valuation process and will not replace a real estates professional assessment!)**')
+    #st.write("Rooms : ",rooms)
+    #x_new = [[3,16,131,11787,10053]]
+    #result = regr.predict(x_new)
+    #print("Prediction: ",result) 
+     #"C:\Users\ghous\.spyder-py3\streamlit_apps\streamlit_apps\random_forest_regression.pkl"
